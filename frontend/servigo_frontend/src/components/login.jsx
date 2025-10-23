@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { login } from '../api';
+import { loginUser } from '../api';
 import { useNavigate } from 'react-router-dom';
 import './login.css';
-
 
 const Login = () => {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -16,7 +15,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await login(form);
+      const res = await loginUser(form);
       localStorage.setItem('token', res.data.token); // save JWT token
       alert('Login successful!');
       navigate('/dashboard'); // later implement dashboard
@@ -26,14 +25,27 @@ const Login = () => {
   };
 
   return (
-    <div>
+    <div className="login-container">
       <h2>Login</h2>
       <form onSubmit={handleSubmit}>
-        <input name="email" placeholder="Email" onChange={handleChange} />
-        <input type="password" name="password" placeholder="Password" onChange={handleChange} />
+        <input
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
         <button type="submit">Login</button>
       </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
     </div>
   );
 };

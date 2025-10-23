@@ -1,41 +1,114 @@
-/* Login.css */
+/* Login.css - Dark Blue & Black Stylish Form */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #0e1331; /* dark navy background */
+  color: #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 35px 30px;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #000105, #1a1f3a); /* dark black & navy gradient */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.login-container h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 28px;
+  color: #d1e8ff; /* stylish blue */
+  letter-spacing: 1px;
+}
 
 form {
-  max-width: 400px;
-  margin: 60px auto;
-  padding: 25px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  background-color: #f4f4f4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 input {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #bbb;
-  border-radius: 5px;
-  font-size: 14px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background-color: #12182b; /* dark input background */
+  color: #e0e0e0;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+input:focus {
+  border-color: #1e90ff;
+  outline: none;
+  box-shadow: 0 0 8px #1e90ff;
 }
 
 button {
   width: 100%;
-  padding: 12px;
-  background-color: #2196f3;
-  color: white;
-  font-size: 16px;
+  padding: 15px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
+  background-color: #1e3a8a; /* dark blue button */
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: bold;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.3s ease;
+  margin-top: 10px;
 }
 
 button:hover {
-  background-color: #0b7dda;
+  background-color: #162c6b; /* darker blue on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(30, 144, 255, 0.4);
+}
+
+.error {
+  margin-top: 15px;
+  font-size: 14px;
+  text-align: center;
+  color: #ff6b6b; /* red color for errors */
 }
 
 p {
-  margin-top: 10px;
+  margin-top: 12px;
   font-size: 14px;
-  color: red;
+  text-align: center;
+  color: #aaa;
+}
+
+a {
+  color: #1e90ff;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive for mobile */
+@media (max-width: 500px) {
+  .login-container {
+    padding: 25px 20px;
+    margin: 30px 10px;
+  }
+
+  .login-container h2 {
+    font-size: 24px;
+  }
 }

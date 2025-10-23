@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { signup } from '../api';
+import { signupUser } from '../api';
 import { useNavigate } from 'react-router-dom';
 import './signup.css';
-
 
 const Signup = () => {
   const [form, setForm] = useState({
@@ -16,7 +15,6 @@ const Signup = () => {
     office_address_district: '',
     office_address_state: '',
     office_address_country: '',
-
     home_address_stno: '',
     home_address_city: '',
     home_address_district: '',
@@ -33,7 +31,7 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await signup(form);
+      await signupUser(form);
       alert('Signup successful!');
       navigate('/login');
     } catch (err) {
@@ -42,8 +40,8 @@ const Signup = () => {
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-      <h2>Signup</h2>
+    <div className="signup-container">
+      <h2 className="head">Signup</h2>
       <form onSubmit={handleSubmit}>
         {/* Basic Info */}
         <h3>Basic Info</h3>
@@ -69,10 +67,18 @@ const Signup = () => {
         <input name="home_address_state" placeholder="State" onChange={handleChange} required />
         <input name="home_address_country" placeholder="Country" onChange={handleChange} required />
 
-        <button type="submit" style={{ marginTop: '20px' }}>Signup</button>
+        <div className="buttons">
+          <button type="submit">Signup</button>
+          <button
+          type="button"
+          className="secondary-btn"
+          onClick={() => navigate('/login')}
+          >Login
+          </button>
+        </div>
       </form>
 
-      {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
     </div>
   );
 };
