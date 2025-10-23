@@ -17,7 +17,9 @@ const Login = () => {
     try {
       const res = await loginUser(form);
       localStorage.setItem('token', res.data.token); // save JWT token
+      localStorage.setItem('user_id', res.data.user.user_id);
       alert('Login successful!');
+      
       navigate('/dashboard'); // later implement dashboard
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
