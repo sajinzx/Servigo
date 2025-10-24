@@ -163,11 +163,3 @@
   }
 }
 
-/* REMOVED the problematic pointer-events rules */
-/* .new-location-input {
-  pointer-events: none;
-}
-
-.new-location-input input {
-  pointer-events: all;
-} */
