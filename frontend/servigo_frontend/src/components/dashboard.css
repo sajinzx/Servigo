@@ -99,3 +99,21 @@
 .modal-buttons button:hover {
   background-color: #162c6b;
 }
+
+.view-services-btn {
+  background: #1e3a8a;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  margin-top: 10px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.3s ease;
+  width: 100%;
+}
+
+.view-services-btn:hover {
+  background: #162c6b;
+  transform: translateY(-2px);
+}

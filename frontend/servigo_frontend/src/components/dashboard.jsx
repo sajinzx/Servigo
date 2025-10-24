@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { fetchVehicles, addVehicle } from '../api';
+import { useNavigate } from 'react-router-dom';
 import './dashboard.css';
 
 const Dashboard = () => {
   const [vehicles, setVehicles] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     vehicle_number: '',
     brand: '',
@@ -67,6 +69,12 @@ const Dashboard = () => {
               {v.seats && <p><strong>Seats:</strong> {v.seats}</p>}
               {v.body_type && <p><strong>Body Type:</strong> {v.body_type}</p>}
               {v.engine_cc && <p><strong>Engine CC:</strong> {v.engine_cc}</p>}
+              <button
+                className="view-services-btn"
+                onClick={() => navigate(`/vehicle/${v.vehicle_number}`)}
+              >
+                view services
+              </button>
             </div>
           ))
         )}

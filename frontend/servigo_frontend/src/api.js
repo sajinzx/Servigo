@@ -21,3 +21,8 @@ export const fetchVehicles = async (userId) => {
 export const addVehicle = async (vehicleData) => {
   return await API.post('/vehicles/addvehicles', vehicleData);
 };
+
+
+export const fetchVehicleServices = async (vehicle_number) => {
+  return await API.get(`/vehicles/services/${vehicle_number}`);
+};
