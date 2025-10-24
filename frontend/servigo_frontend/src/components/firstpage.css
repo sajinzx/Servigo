@@ -1,0 +1,64 @@
+.entry-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #0c1b31;
+  font-family: 'Arial', sans-serif;
+
+  /* Added border and shadow */
+  border: 2px solid #0a2949;      /* blue border */
+  border-radius: 12px;            /* rounded corners */
+  box-shadow: 0 8px 25px rgba(32, 136, 165, 0.3); /* shadow for depth */
+  padding: 40px;                  /* inner spacing */
+}
+
+
+.entry-container h1 {
+  margin-bottom: 40px;
+  color: #333;
+  text-align: center;
+}
+
+.buttons-container {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.role-btn {
+  padding: 20px 40px;
+  font-size: 18px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  color: #fff;
+}
+
+.user-btn {
+  background-color: #007bff;
+}
+
+.user-btn:hover {
+  background-color: #0056b3;
+}
+
+.mechanic-btn {
+  background-color: #28a745;
+}
+
+.mechanic-btn:hover {
+  background-color: #1e7e34;
+}
+
+.admin-btn {
+  background-color: #ff5722;
+}
+
+.admin-btn:hover {
+  background-color: #e64a19;
+}

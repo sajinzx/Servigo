@@ -35,3 +35,7 @@ export const fetchPendingBookings = (user_id) => {
 export const bookService = async (bookingData) => {
   return await API.post('/bookservice', bookingData);
 };
+
+export const getAllBookings = () => API.get('/admin/bookings');
+export const acceptBooking = (booking_id) => API.put(`/admin/bookings/accept/${booking_id}`);
+export const deliverBooking = (booking_id) => API.put(`/admin/bookings/deliver/${booking_id}`);

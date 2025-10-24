@@ -17,7 +17,18 @@ exports.getPendingBookings = async (req, res) => {
       [user_id]
     );
 
-    res.status(200).json({ user_id, pendingBookings: bookings });
+    // Format dates to local IST and readable string
+    const bookingsFormatted = bookings.map(b => ({
+      ...b,
+      dateofrequest: b.dateofrequest
+        ? new Date(b.dateofrequest).toLocaleString('en-IN', { hour12: true })
+        : null,
+      datedelivered: b.datedelivered
+        ? new Date(b.datedelivered).toLocaleString('en-IN', { hour12: true })
+        : null
+    }));
+
+    res.status(200).json({ user_id, pendingBookings: bookingsFormatted });
   } catch (err) {
     console.error('Error fetching pending bookings:', err);
     res.status(500).json({ message: 'Server error' });
