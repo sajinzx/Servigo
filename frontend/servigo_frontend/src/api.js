@@ -26,3 +26,12 @@ export const addVehicle = async (vehicleData) => {
 export const fetchVehicleServices = async (vehicle_number) => {
   return await API.get(`/vehicles/services/${vehicle_number}`);
 };
+
+export const fetchPendingBookings = (user_id) => {
+  return API.get(`/bookings/${user_id}`);
+};
+
+
+export const bookService = async (bookingData) => {
+  return await API.post('/bookservice', bookingData);
+};

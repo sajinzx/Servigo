@@ -29,11 +29,15 @@ exports.getServicesByVehicle = async (req, res) => {
       }
     }
 
-    // Fetch services for this type
-    // Fetch services for this type
+    // Fetch services for this type that are NOT already booked for this vehicle
     const [services] = await pool.query(
-      'SELECT service_id, service_name, cost AS price, estimated_duration AS duration FROM service WHERE service_id LIKE ?',
-      [`${vehicleType.toUpperCase()}_%`]
+      `SELECT service_id, service_name, cost AS price, estimated_duration AS duration 
+       FROM service 
+       WHERE service_id LIKE ? 
+       AND service_id NOT IN (
+         SELECT service_id FROM bookingreq WHERE vehicle_number = ?
+       )`,
+      [`${vehicleType.toUpperCase()}_%`, vehicle_number]
     );
 
     res.status(200).json({ vehicle_number, vehicleType, services });

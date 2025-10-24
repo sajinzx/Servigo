@@ -1,62 +1,183 @@
+/* Container for services page */
 .services-container {
+  max-width: 950px;
+  margin: 40px auto;
   padding: 20px;
-  max-width: 900px;
-  margin: auto;
+  font-family: 'Arial', sans-serif;
   color: #333;
-  font-family: 'Poppins', sans-serif;
 }
 
-.back-btn {
-  background: #1f1f1f;
-  color: #fff;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+/* Top buttons container (Back + Pending Services) */
+.top-buttons {
+  display: flex;
+  flex-direction: column; /* stack buttons vertically */
+  gap: 12px; /* space between buttons */
   margin-bottom: 20px;
-  transition: background 0.3s;
+  align-items: flex-start; /* align buttons to left */
+}
+
+/* Back button */
+.back-btn {
+  background-color: #f0f0f0;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s ease-in-out;
 }
 
 .back-btn:hover {
-  background: #444;
+  background-color: #e0e0e0;
 }
 
+/* Pending services button */
+.pending-btn {
+  background-color: #28a745;
+  color: #fff;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.pending-btn:hover {
+  background-color: #1e7e34;
+}
+
+/* Services title */
 .services-title {
-  font-size: 1.8rem;
-  margin-bottom: 20px;
   text-align: center;
+  margin-bottom: 25px;
+  font-size: 24px;
+  font-weight: 600;
 }
 
+/* Services list */
 .services-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 20px;
+  justify-content: center;
 }
 
+/* Individual service card */
 .service-card {
-  background: #f5f5f5;
-  padding: 16px;
+  background-color: #fff;
+  border: 1px solid #ddd;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  transition: transform 0.3s ease;
+  width: 250px;
+  padding: 20px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+  text-align: center;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .service-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
 }
 
+/* Book button inside service card */
 .book-btn {
-  margin-top: 10px;
-  background: #007bff;
-  color: white;
+  margin-top: 12px;
+  background-color: #007bff;
+  color: #fff;
   border: none;
-  padding: 8px 12px;
+  padding: 10px 16px;
   border-radius: 6px;
   cursor: pointer;
-  width: 100%;
-  transition: background 0.3s ease;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
 }
 
 .book-btn:hover {
-  background: #0056b3;
+  background-color: #0056b3;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Modal box */
+.modal {
+  background-color: #fff;
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90%;
+  padding: 30px 25px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Modal fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Modal select and input */
+.modal select,
+.modal input {
+  width: 80%;
+  padding: 10px 12px;
+  margin: 12px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  outline: none;
+}
+
+.modal select:focus,
+.modal input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0,123,255,0.4);
+}
+
+/* Modal buttons container */
+.modal-buttons {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+/* Modal confirm/cancel buttons */
+.modal-buttons button {
+  padding: 10px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+}
+
+.confirm-btn {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.confirm-btn:hover {
+  background-color: #0056b3;
+}
+
+.cancel-btn {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.cancel-btn:hover {
+  background-color: #a71d2a;
 }

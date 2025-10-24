@@ -1,0 +1,173 @@
+/* Container for Book Service page */
+.bookservice-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px 25px;
+  background-color: #fdfdfd;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  font-family: 'Arial', sans-serif;
+}
+
+/* Heading */
+.bookservice-container h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #333;
+}
+
+/* Location options container */
+.location-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+/* Individual label for radio buttons */
+.location-options label {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background-color: #fff;
+}
+
+/* Radio buttons spacing */
+.location-options input[type="radio"] {
+  margin-right: 12px;
+}
+
+/* Hover effect for labels */
+.location-options label:hover {
+  background-color: #f0f8ff;
+  border-color: #1e90ff;
+}
+
+/* Container for new location input */
+.new-location-input {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  /* REMOVED: pointer-events: none; */
+}
+
+/* Input for new location */
+.new-location-input input {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-top: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  /* REMOVED: pointer-events: all; */
+  transition: border-color 0.2s ease;
+}
+
+/* Focus state for input */
+.new-location-input input:focus {
+  outline: none;
+  border-color: #1e90ff;
+  box-shadow: 0 0 0 2px rgba(30, 144, 255, 0.2);
+}
+
+/* Buttons container (stacked vertically) */
+.bookservice-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Confirm button */
+.confirm-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  background-color: #1e90ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirm-btn:hover {
+  background-color: #0077cc;
+}
+
+/* Cancel button */
+.cancel-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #a71d2a;
+}
+
+/* Back button */
+.back-btn {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 8px 15px;
+  background-color: #eee;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background-color: #ddd;
+}
+
+/* Selected location text */
+.selected-location {
+  font-weight: bold;
+  color: #1e90ff;
+}
+
+/* Responsive for small screens */
+@media (max-width: 480px) {
+  .bookservice-container {
+    padding: 15px 20px;
+    margin: 20px 10px;
+  }
+
+  .location-options label {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .new-location-input input {
+    font-size: 14px;
+  }
+
+  .confirm-btn, .cancel-btn {
+    font-size: 14px;
+    padding: 10px;
+  }
+}
+
+/* REMOVED the problematic pointer-events rules */
+/* .new-location-input {
+  pointer-events: none;
+}
+
+.new-location-input input {
+  pointer-events: all;
+} */

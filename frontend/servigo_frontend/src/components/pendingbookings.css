@@ -1,0 +1,70 @@
+/* Global container */
+.pending-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
+  background: linear-gradient(145deg, #01061b, #1a1f3a);
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  color: #e0e0e0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Title */
+.pending-container h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 28px;
+  color: #d1e8ff;
+  letter-spacing: 1px;
+}
+
+/* Individual booking card */
+.booking-card {
+  background-color: #12182b;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 15px 20px;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+}
+
+.booking-card:hover {
+  border-color: #1e90ff;
+  box-shadow: 0 5px 15px rgba(30, 144, 255, 0.3);
+}
+
+/* Booking details */
+.booking-card p {
+  margin: 5px 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.booking-card strong {
+  color: #1e90ff;
+}
+
+/* No bookings message */
+.pending-container p {
+  text-align: center;
+  color: #aaa;
+  font-size: 16px;
+  margin-top: 20px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .pending-container {
+    padding: 15px;
+    margin: 20px 10px;
+  }
+
+  .pending-container h2 {
+    font-size: 22px;
+  }
+
+  .booking-card p {
+    font-size: 14px;
+  }
+}
