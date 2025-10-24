@@ -57,7 +57,8 @@ CREATE TABLE mechanic (
     number_of_employees INT,
     location VARCHAR(100),
     contact_number VARCHAR(15),
-    rating FLOAT CHECK (rating BETWEEN 0 AND 5)
+    rating FLOAT CHECK (rating BETWEEN 0 AND 5),
+    password VARCHAR(255)
 );
 
 CREATE TABLE service(

@@ -1,0 +1,82 @@
+.mechanic-login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f3f6fb;
+}
+
+.mechanic-login-card {
+  width: 380px;
+  background: rgb(36, 12, 90);
+  padding: 40px 35px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.mechanic-login-card h2 {
+  color: #1e90ff;
+  margin-bottom: 10px;
+}
+
+.mechanic-login-card p {
+  color: #555;
+  margin-bottom: 25px;
+  font-size: 15px;
+}
+
+.mechanic-login-card label {
+  display: block;
+  text-align: left;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.mechanic-login-card input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.mechanic-login-card input:focus {
+  border-color: #1e90ff;
+  box-shadow: 0 0 4px rgba(30, 144, 255, 0.3);
+}
+
+.login-btn {
+  width: 100%;
+  background-color: #1e90ff;
+  color: #fff;
+  padding: 10px 0;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  background-color: #0f7ae5;
+}
+
+.signup-link {
+  margin-top: 15px;
+  color: #555;
+}
+
+.signup-link span {
+  color: #1e90ff;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.signup-link span:hover {
+  text-decoration: underline;
+}

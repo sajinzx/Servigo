@@ -1,0 +1,81 @@
+.mechanic-signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #0d2e5e;
+  font-family: 'Poppins', sans-serif;
+}
+
+.mechanic-signup-card {
+  background: #1b0752;
+  padding: 40px 50px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  width: 400px;
+  text-align: center;
+}
+
+.mechanic-signup-card h2 {
+  color: #1e88e5;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.mechanic-signup-card p {
+  color: #555;
+  font-size: 14px;
+  margin-bottom: 25px;
+}
+
+.mechanic-signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mechanic-signup-form input {
+  padding: 10px;
+  border: 1px solid #c7d8ff;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.mechanic-signup-form input:focus {
+  border-color: #1e88e5;
+  box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.1);
+  outline: none;
+}
+
+.signup-btn {
+  background-color: #1e88e5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.signup-btn:hover {
+  background-color: #1565c0;
+}
+
+.login-link {
+  margin-top: 18px;
+  color: #555;
+  font-size: 14px;
+}
+
+.login-link span {
+  color: #1e88e5;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-link span:hover {
+  text-decoration: underline;
+}

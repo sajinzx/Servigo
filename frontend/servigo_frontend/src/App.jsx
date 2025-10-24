@@ -8,6 +8,11 @@ import PendingBookings from './components/pendingbookings';
 import BookService from './components/bookservice'; // New component for booking location selection
 import AdminEntry from './components/firstpage';
 import AdminDashboard from './components/admindashboard';
+import MechanicSignup from './components/mechanicsignup';
+import MechanicLogin from './components/mechaniclogin';
+import ModernMechanicDashboard from './components/mechanicdashboard';
+import MechanicPendingRequests from './components/mechanicpendingrequests';
+
 
 function App() {
   return (
@@ -21,6 +26,10 @@ function App() {
         <Route path="/bookservice/:vehicle_number/:service_id" element={<BookService />} /> {/* BookService route */}
         <Route path="/pending-bookings" element={<PendingBookings />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/mechanic-signup" element={<MechanicSignup />} />
+        <Route path="/mechanic-login" element={<MechanicLogin />} />
+        <Route path="/mechanic-dashboard" element={<ModernMechanicDashboard />} />
+        <Route path="/mechanic-pending-requests" element={<MechanicPendingRequests />} />
       </Routes>
     </Router>
   );
