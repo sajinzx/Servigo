@@ -49,26 +49,46 @@ export const mechanicLogin = async (credentials) => {
   return await API.post('/mechanic/login', credentials);
 };
 
+
+
 export const getMechanicServices = async (mechanicId) => {
   return await API.get(`/mechanic/services/${mechanicId}`);
 };
 
-export const addMechanicService = async (mechanicId, serviceId) => {
-  return await API.post('/mechanic/addservice', { mechanicId, serviceId });
+// api.js
+export const getAvailableServices = async (mechanicId) => {
+  if (!mechanicId) return []; // safety
+  try {
+    const response = await axios.get(`/mechanic/available-services/${mechanicId}`);
+    return response.data; // should be array
+  } catch (error) {
+    console.error('Error fetching available services:', error);
+    return [];
+  }
 };
 
-export const removeMechanicService = async (mechanicId, serviceId) => {
-  return await API.delete(`/mechanic/removeservice/${mechanicId}/${serviceId}`);
+
+export const addService = async (mechanicId, serviceId) => {
+  return await API.post('/mechanic/services', { mechanicId, serviceId });
+};
+
+export const removeService = async (mechanicId, serviceId) => {
+  return await API.delete(`/mechanic/services/${mechanicId}/${serviceId}`);
 };
 
 export const getServiceRequests = async (mechanicId) => {
   return await API.get(`/mechanic/requests/${mechanicId}`);
 };
 
-export const updateRequestStatus = async (bookingId, status) => {
-  return await API.put(`/mechanic/request/${bookingId}`, { status });
-};
+
 
 export const getPendingRequests = async (mechanicId) => {
   return await API.get(`/mechanic/pending-requests/${mechanicId}`);
 };
+
+export const updateRequestStatus = async (bookingId, status) => {
+  return await API.put(`/mechanic/request/${bookingId}`, { status });
+};
+
+
+

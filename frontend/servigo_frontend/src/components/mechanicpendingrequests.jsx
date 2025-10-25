@@ -1,54 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPendingRequests, updateRequestStatus as updateRequestStatusAPI } from '../api';
+import axios from 'axios';
 import './mechanicpendingrequests.css';
 
 const MechanicPendingRequests = () => {
-  const [pendingRequests, setPendingRequests] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(null); // track which request is updating
   const navigate = useNavigate();
   const mechanicId = localStorage.getItem('mechanicId');
 
   useEffect(() => {
-    fetchPendingRequests();
+    fetchRequests();
   }, []);
 
-  const fetchPendingRequests = async () => {
+  const fetchRequests = async () => {
     try {
-      const response = await getPendingRequests(mechanicId);
-      setPendingRequests(response.data);
-    } catch (error) {
-      console.error('Error fetching pending requests:', error);
+      setLoading(true);
+      const response = await axios.get(
+        `http://localhost:3000/api/mechanic/pending-requests/${mechanicId}`
+      );
+      setRequests(response.data || []);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const updateRequestStatus = async (bookingId, status) => {
+  const handleStatusUpdate = async (bookingId, newStatus) => {
     try {
-      await updateRequestStatusAPI(bookingId, status);
-      fetchPendingRequests();
-    } catch (error) {
-      alert('Error updating request status');
+      setUpdating(bookingId);
+      await axios.put(
+        `http://localhost:3000/api/mechanic/requests/${bookingId}`,
+        { status: newStatus }
+      );
+      // Refetch the latest data
+      fetchRequests();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update request status.');
+    } finally {
+      setUpdating(null);
     }
   };
 
   if (loading) return <div className="loading">Loading...</div>;
 
   return (
-    <div className="pending-requests-container">
-      <div className="header">
+    <div className="pending-container">
+      <div className="pending-header">
         <h1>Pending Requests - {mechanicId}</h1>
-        <button className="btn-back" onClick={() => navigate('/modern-mechanic-dashboard')}>
+        <button className="btn-primary" onClick={() => navigate('/mechanic-dashboard')}>
           Back to Dashboard
         </button>
       </div>
 
-      {pendingRequests.length === 0 ? (
-        <div className="no-requests">NO PENDING REQUESTS</div>
+      {requests.length === 0 ? (
+        <div className="empty-state">NO PENDING REQUESTS</div>
       ) : (
         <div className="table-wrapper">
-          <table className="requests-table">
+          <table className="pending-table">
             <thead>
               <tr>
                 <th>Booking ID</th>
@@ -63,39 +75,78 @@ const MechanicPendingRequests = () => {
               </tr>
             </thead>
             <tbody>
-              {pendingRequests.map((request, index) => (
-                <tr key={request.booking_id} className={index % 2 === 0 ? 'even' : 'odd'}>
-                  <td>{request.booking_id}</td>
-                  <td>{request.service_name}</td>
-                  <td>{request.customer_name}</td>
-                  <td>{request.vehicle_number}</td>
-                  <td>{request.location}</td>
-                  <td>₹{request.price}</td>
-                  <td>{new Date(request.dateofrequest).toLocaleDateString()}</td>
+              {requests.map((req, idx) => (
+                <tr key={req.booking_id} className={idx % 2 === 0 ? 'even' : ''}>
+                  <td>{req.booking_id}</td>
+                  <td>{req.service_name}</td>
+                  <td>{req.customer_name}</td>
+                  <td>{req.vehicle_number}</td>
+                  <td>{req.location}</td>
+                  <td>₹{req.price}</td>
+                  <td>{new Date(req.dateofrequest).toLocaleDateString()}</td>
                   <td>
-                    <span className={`status-badge ${request.status}`}>{request.status.toUpperCase()}</span>
+                    <span className={`status-badge ${req.status}`}>
+                      {req.status.toUpperCase()}
+                    </span>
                   </td>
-                  <td>
-                    <div className="actions">
-                      {request.status === 'pending' && (
-                        <>
-                          <button onClick={() => updateRequestStatus(request.booking_id, 'accepted')} className="btn-accept">Accept</button>
-                          <button onClick={() => updateRequestStatus(request.booking_id, 'held')} className="btn-hold">Hold</button>
-                        </>
-                      )}
-                      {request.status === 'held' && (
-                        <>
-                          <button onClick={() => updateRequestStatus(request.booking_id, 'accepted')} className="btn-accept">Accept</button>
-                          <button onClick={() => updateRequestStatus(request.booking_id, 'cancelled')} className="btn-deny">Deny</button>
-                        </>
-                      )}
-                      {request.status === 'accepted' && (
-                        <button onClick={() => updateRequestStatus(request.booking_id, 'in_progress')} className="btn-start">Start Work</button>
-                      )}
-                      {request.status === 'in_progress' && (
-                        <button onClick={() => updateRequestStatus(request.booking_id, 'delivered')} className="btn-complete">Complete</button>
-                      )}
-                    </div>
+                  <td className="actions">
+                    {req.status === 'pending' && (
+                      <>
+                        <button
+                          disabled={updating === req.booking_id}
+                          className="btn-accept"
+                          onClick={() => handleStatusUpdate(req.booking_id, 'accepted')}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          disabled={updating === req.booking_id}
+                          className="btn-hold"
+                          onClick={() => handleStatusUpdate(req.booking_id, 'held')}
+                        >
+                          Hold
+                        </button>
+                      </>
+                    )}
+
+                    {req.status === 'held' && (
+                      <>
+                        <button
+                          disabled={updating === req.booking_id}
+                          className="btn-accept"
+                          onClick={() => handleStatusUpdate(req.booking_id, 'accepted')}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          disabled={updating === req.booking_id}
+                          className="btn-deny"
+                          onClick={() => handleStatusUpdate(req.booking_id, 'cancelled')}
+                        >
+                          Deny
+                        </button>
+                      </>
+                    )}
+
+                    {req.status === 'accepted' && (
+                      <button
+                        disabled={updating === req.booking_id}
+                        className="btn-start"
+                        onClick={() => handleStatusUpdate(req.booking_id, 'in_progress')}
+                      >
+                        Start Work
+                      </button>
+                    )}
+
+                    {req.status === 'in_progress' && (
+                      <button
+                        disabled={updating === req.booking_id}
+                        className="btn-complete"
+                        onClick={() => handleStatusUpdate(req.booking_id, 'delivered')}
+                      >
+                        Complete
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
