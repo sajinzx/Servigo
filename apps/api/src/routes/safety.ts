@@ -25,8 +25,6 @@ const appealSchema = z.object({ text: z.string().trim().min(5).max(1000) }).stri
 /** Customer and workshop facing trust & safety actions. The rules themselves are SQL. */
 export function safetyRouter(rpc: Rpc, auth: RequestHandler): Router {
   const r = Router();
-  r.use(auth);
-
   const wrap =
     (fn: RequestHandler): RequestHandler =>
     async (req, res, next) => {
@@ -39,6 +37,7 @@ export function safetyRouter(rpc: Rpc, auth: RequestHandler): Router {
 
   r.post(
     '/bookings/:id/incidents',
+    auth,
     wrap(async (req, res) => {
       const b = incidentSchema.parse(req.body);
       const inc = await rpc.one('report_incident', {
@@ -54,6 +53,7 @@ export function safetyRouter(rpc: Rpc, auth: RequestHandler): Router {
 
   r.post(
     '/bookings/:id/dispute',
+    auth,
     requireRole('customer'),
     wrap(async (req, res) => {
       const b = disputeSchema.parse(req.body);
@@ -69,6 +69,7 @@ export function safetyRouter(rpc: Rpc, auth: RequestHandler): Router {
 
   r.post(
     '/strikes/:id/appeal',
+    auth,
     requireRole('mechanic'),
     wrap(async (req, res) => {
       const b = appealSchema.parse(req.body);

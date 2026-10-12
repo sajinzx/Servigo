@@ -11,6 +11,8 @@ import { webhooksRouter } from './routes/webhooks';
 import { applicationsRouter } from './routes/applications';
 import { adminRouter } from './routes/admin';
 import { safetyRouter } from './routes/safety';
+import { paymentsRouter, type PaymentsDeps } from './routes/payments';
+import { financeRouter } from './routes/finance';
 import type { Rpc } from './db/rpc';
 import type { NotificationStore } from './worker/ports';
 
@@ -24,6 +26,8 @@ export interface AppDeps {
   rpc?: Rpc;
   /** 32-byte key that encrypts payout details */
   payoutKey?: Buffer;
+  /** UPI payee and Razorpay credentials; payments are disabled for whatever is missing */
+  payments?: Omit<PaymentsDeps, 'rpc'>;
 }
 
 export function createApp(config: Config, deps?: AppDeps): Express {
@@ -67,6 +71,8 @@ export function createApp(config: Config, deps?: AppDeps): Express {
     }
     if (deps.rpc) {
       app.use('/api/admin', adminRouter(deps.rpc, auth));
+      app.use('/api/admin/finance', financeRouter(deps.rpc, auth));
+      app.use('/api', paymentsRouter({ rpc: deps.rpc, ...deps.payments }, auth));
       app.use('/api', safetyRouter(deps.rpc, auth));
       if (deps.payoutKey) {
         app.use('/api/applications', applicationsRouter({ rpc: deps.rpc, payoutKey: deps.payoutKey }, auth));

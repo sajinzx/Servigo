@@ -23,6 +23,17 @@ if (db) {
     offers: supabaseOffers(db),
     rpc: supabaseRpc(db),
     payoutKey: config.PAYOUT_ENCRYPTION_KEY ? parseKey(config.PAYOUT_ENCRYPTION_KEY) : undefined,
+    payments: {
+      payee: config.UPI_PAYEE_ID ? { vpa: config.UPI_PAYEE_ID, name: config.UPI_PAYEE_NAME } : undefined,
+      razorpay:
+        config.RAZORPAY_KEY_ID && config.RAZORPAY_KEY_SECRET
+          ? {
+              keyId: config.RAZORPAY_KEY_ID,
+              keySecret: config.RAZORPAY_KEY_SECRET,
+              webhookSecret: config.RAZORPAY_WEBHOOK_SECRET,
+            }
+          : undefined,
+    },
     notifications: process.env.DATABASE_URL
       ? pgNotificationStore(new Pool({ connectionString: process.env.DATABASE_URL, max: 3 }))
       : undefined,
