@@ -9,3 +9,8 @@ select cron.schedule('expire-stale-offers', '* * * * *', $$select public.expire_
 select cron.schedule('process-no-shows', '*/5 * * * *', $$select public.process_no_shows()$$);
 select cron.schedule('acceptance-floor', '7 * * * *', $$select public.refresh_acceptance_floor()$$);
 select cron.schedule('reverification', '0 3 * * *', $$select public.flag_reverification()$$);
+
+-- payments (plan section 10)
+select cron.schedule('flag-overdue-payments', '15 * * * *', $$select public.flag_overdue_payments()$$);
+-- every Monday 06:00 IST (00:30 UTC): prepare the payout list; an admin marks each transfer paid
+select cron.schedule('plan-payouts', '30 0 * * 1', $$select public.plan_payouts()$$);
