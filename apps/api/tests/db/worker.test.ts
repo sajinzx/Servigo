@@ -140,9 +140,14 @@ describe('notification worker', () => {
 
     const whatsapps = sent.filter((s) => s.channel === 'whatsapp' && s.template === 'booking_accepted');
     expect(whatsapps).toHaveLength(1);
-    const pending = await w.db.query(`select 1 from public.outbox where status = 'pending'`);
+    // (dispatch jobs belong to the allocation worker, which this test does not run)
+    const pending = await w.db.query(
+      `select 1 from public.outbox where status = 'pending' and event_type <> 'dispatch.booking'`,
+    );
     expect(pending.rows).toHaveLength(0); // everything was eventually completed
-    const dead = await w.db.query(`select 1 from public.outbox where status = 'dead'`);
+    const dead = await w.db.query(
+      `select 1 from public.outbox where status = 'dead' and event_type <> 'dispatch.booking'`,
+    );
     expect(dead.rows).toHaveLength(0);
   });
 
