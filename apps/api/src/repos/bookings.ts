@@ -1,6 +1,7 @@
 import type { Db } from '../db/supabase';
 import { unwrap } from '../db/supabase';
-import type { BookingRow, BookingStore, QuoteContext } from '../routes/bookings';
+import type { BookingRow, BookingStore } from '../routes/bookings';
+import type { QuoteContext } from '../domain/quoter';
 
 /** supabase-js rpc wrapper: our SQL functions return a single booking row. */
 export function supabaseBookings(db: Db): BookingStore {
@@ -11,21 +12,24 @@ export function supabaseBookings(db: Db): BookingStore {
     async quoteContext(vehicleId, serviceId): Promise<QuoteContext | null> {
       const veh = await db
         .from('vehicles')
-        .select('id, vehicle_models(kind, segment)')
+        .select('id, year, odometer_km, last_service_at, vehicle_models(kind, segment)')
         .eq('id', vehicleId)
         .maybeSingle();
       const vehicle = unwrap(veh) as unknown as {
+        year: number;
+        odometer_km: number;
+        last_service_at: string | null;
         vehicle_models: { kind: string; segment: string };
       } | null;
       if (!vehicle) return null;
 
       const svc = await db
         .from('services')
-        .select('base_price, base_duration_min')
+        .select('code, base_price, base_duration_min')
         .eq('id', serviceId)
         .eq('is_active', true)
         .maybeSingle();
-      const service = unwrap(svc) as { base_price: number; base_duration_min: number } | null;
+      const service = unwrap(svc) as { code: string; base_price: number; base_duration_min: number } | null;
       if (!service) return null;
 
       const fac = await db
@@ -36,10 +40,21 @@ export function supabaseBookings(db: Db): BookingStore {
         .maybeSingle();
       const factor = unwrap(fac) as { factor: number } | null;
 
+      const now = new Date();
+      const age = Math.max(0, now.getFullYear() - vehicle.year);
+      const perDay = Math.max(vehicle.odometer_km / Math.max(age * 365, 30), 1);
+      const sinceService = vehicle.last_service_at
+        ? Math.max(0, (now.getTime() - new Date(vehicle.last_service_at).getTime()) / 86_400_000)
+        : age * 365;
+
       return {
+        serviceCode: service.code,
+        segment: vehicle.vehicle_models.segment,
         basePrice: Number(service.base_price),
         segmentFactor: factor ? Number(factor.factor) : 1,
         baseDurationMin: service.base_duration_min,
+        vehicleAge: age,
+        kmSinceService: Math.round(perDay * sinceService),
       };
     },
 

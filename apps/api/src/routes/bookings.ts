@@ -1,7 +1,7 @@
 import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
 import { requireRole } from '../auth/middleware';
-import { baselineQuote } from '../domain/pricing';
+import { baselineQuoter, type QuoteContext, type Quoter } from '../domain/quoter';
 import { badRequest, notFound } from '../http/errors';
 
 export interface BookingRow {
@@ -14,12 +14,6 @@ export interface BookingRow {
   quote_high: number;
   final_price: number | null;
   needs_price_approval: boolean;
-}
-
-export interface QuoteContext {
-  basePrice: number;
-  segmentFactor: number;
-  baseDurationMin: number;
 }
 
 export interface CreateBookingArgs {
@@ -35,6 +29,8 @@ export interface CreateBookingArgs {
   quoteHigh: number;
   predictedDurationMin: number;
 }
+
+export type { QuoteContext };
 
 export interface BookingStore {
   quoteContext(vehicleId: string, serviceId: string): Promise<QuoteContext | null>;
@@ -82,7 +78,11 @@ const bookingId = (req: { params: Record<string, string | string[]> }) =>
 
 const cancelSchema = z.object({ reason: z.string().trim().max(200).optional() }).strict();
 
-export function bookingsRouter(store: BookingStore, auth: RequestHandler): Router {
+export function bookingsRouter(
+  store: BookingStore,
+  auth: RequestHandler,
+  quoter: Quoter = baselineQuoter,
+): Router {
   const r = Router();
   r.use(auth);
 
@@ -101,7 +101,7 @@ export function bookingsRouter(store: BookingStore, auth: RequestHandler): Route
       }
       if (!point) throw badRequest('a pickup location is required');
 
-      const quote = baselineQuote({ basePrice: ctx.basePrice, segmentFactor: ctx.segmentFactor });
+      const quote = await quoter.quote(ctx);
       const booking = await store.create({
         customerId: user.id,
         vehicleId: body.vehicle_id,
@@ -113,7 +113,7 @@ export function bookingsRouter(store: BookingStore, auth: RequestHandler): Route
         symptomText: body.symptom_text ?? null,
         quoteLow: quote.low,
         quoteHigh: quote.high,
-        predictedDurationMin: ctx.baseDurationMin,
+        predictedDurationMin: quote.durationMin,
       });
 
       // create_booking queued the dispatch job in the same transaction

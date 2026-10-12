@@ -25,7 +25,10 @@ function setup() {
   });
   const store: BookingStore = {
     async quoteContext() {
-      return { basePrice: 2500, segmentFactor: 1.35, baseDurationMin: 180 };
+      return {
+        serviceCode: 'CAR_001', segment: 'suv', basePrice: 2500, segmentFactor: 1.35,
+        baseDurationMin: 180, vehicleAge: 5, kmSinceService: 6000,
+      };
     },
     async addressPoint(_u, id) {
       return id === ADDRESS ? { lat: 13.085, lng: 80.21 } : null;
