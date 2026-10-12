@@ -58,7 +58,7 @@ describe('/api/me', () => {
     const res = await request(app)
       .patch('/api/me')
       .set('Authorization', `Bearer ${token('u1')}`)
-      .send({ phone: '+919840012345', whatsapp_opt_in: true });
+      .send({ full_name: 'Asha K', whatsapp_opt_in: true });
     expect(res.status).toBe(200);
     expect(res.body.whatsapp_opt_in).toBe(true);
   });
@@ -73,12 +73,12 @@ describe('/api/me', () => {
     expect(rows.get('u1')!.role).toBe('customer');
   });
 
-  it('validates the phone format', async () => {
-    const { app } = setup();
-    const res = await request(app)
-      .patch('/api/me')
-      .set('Authorization', `Bearer ${token('u1')}`)
-      .send({ phone: '12345' });
-    expect(res.status).toBe(400);
+  it('refuses to set the phone or verification flags through the api', async () => {
+    const { app, rows } = setup();
+    for (const body of [{ phone: '+919840012345' }, { phone_verified: true }, { onboarded_at: '2026-01-01' }]) {
+      const res = await request(app).patch('/api/me').set('Authorization', `Bearer ${token('u1')}`).send(body);
+      expect(res.status).toBe(400);
+    }
+    expect(rows.get('u1')!.phone_verified).toBe(false);
   });
 });

@@ -25,7 +25,7 @@ begin
   values (
     new.id,
     coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name'),
-    nullif(new.phone, ''),
+    case when coalesce(new.phone, '') = '' then null else '+' || ltrim(new.phone, '+') end,
     new.phone_confirmed_at is not null
   )
   on conflict (id) do nothing;
@@ -46,17 +46,26 @@ language sql stable security definer set search_path = public as $$
   select role from public.profiles where id = auth.uid();
 $$;
 
--- A user may edit their own name and phone, but never their role.
+-- A user may edit their own name and notification choices, and nothing that says
+-- who they are or what they have proven: role, phone, phone_verified and
+-- onboarded_at change only through Supabase Auth or the service role.
 create function public.profiles_guard() returns trigger
 language plpgsql as $$
 begin
   new.updated_at := now();
-  if new.role is distinct from old.role
-     and coalesce(auth.role(), 'service_role') <> 'service_role' then
-    raise exception 'role can only be changed by the service role' using errcode = '42501';
-  end if;
-  if new.phone is distinct from old.phone then
-    new.phone_verified := false;
+  -- `servigo.trusted` is set (transaction-locally) only inside SECURITY DEFINER functions that
+  -- have done their own checks, such as complete_onboarding(). Clients cannot run set_config.
+  if coalesce(auth.role(), 'service_role') <> 'service_role'
+     and coalesce(current_setting('servigo.trusted', true), '') <> 'on' then
+    if new.role is distinct from old.role then
+      raise exception 'role can only be changed by the service role' using errcode = '42501';
+    end if;
+    if new.phone is distinct from old.phone
+       or new.phone_verified is distinct from old.phone_verified
+       or new.onboarded_at is distinct from old.onboarded_at then
+      raise exception 'phone and onboarding status are set by verification, not by editing'
+        using errcode = '42501';
+    end if;
   end if;
   return new;
 end $$;
@@ -75,3 +84,20 @@ create policy profiles_select_admin on public.profiles
 
 create policy profiles_update_own on public.profiles
   for update using (id = auth.uid()) with check (id = auth.uid());
+
+-- A phone confirmed through Supabase Auth (OTP) is the only way phone_verified becomes true.
+create function public.sync_profile_phone() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  update public.profiles
+     set phone = case when coalesce(new.phone, '') = '' then null else '+' || ltrim(new.phone, '+') end,
+         phone_verified = new.phone_confirmed_at is not null and coalesce(new.phone, '') <> ''
+   where id = new.id;
+  return new;
+end $$;
+
+create trigger on_auth_user_phone_changed
+  after update of phone, phone_confirmed_at on auth.users
+  for each row
+  when (old.phone is distinct from new.phone or old.phone_confirmed_at is distinct from new.phone_confirmed_at)
+  execute function public.sync_profile_phone();
