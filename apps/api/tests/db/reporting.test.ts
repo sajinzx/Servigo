@@ -130,4 +130,25 @@ describe('admin reporting', () => {
     expect(other).toHaveLength(0);
     await w.db.close();
   });
+
+  it('exports flat pilot rows an admin can hand to the report generator', async () => {
+    const w = await world();
+    const id = await accepted(w, 45);
+    await w.db.query(`update public.bookings set started_at = now() + interval '15 minutes' where id = $1`, [id]);
+    const rows = await asUser(w.db, w.admin, async () =>
+      (await w.db.query<Record<string, unknown>>(
+        `select * from public.pilot_export_bookings(now() - interval '1 day', now() + interval '1 day')`)).rows);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ status: 'accepted', service_code: 'CAR_001', vehicle_kind: 'car', assign_s: 45 });
+    // eta was 12 minutes; the job "started" a little after acceptance, so the error is about +3 minutes
+    expect(Number(rows[0].eta_error_min)).toBeGreaterThan(2);
+    expect(Number(rows[0].eta_error_min)).toBeLessThan(4);
+
+    await expect(
+      asUser(w.db, w.customer, async () => {
+        await w.db.query(`select * from public.pilot_export_bookings(now() - interval '1 day', now())`);
+      }),
+    ).rejects.toThrow(/admin only/);
+    await w.db.close();
+  });
 });
