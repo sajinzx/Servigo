@@ -14,3 +14,8 @@ select cron.schedule('reverification', '0 3 * * *', $$select public.flag_reverif
 select cron.schedule('flag-overdue-payments', '15 * * * *', $$select public.flag_overdue_payments()$$);
 -- every Monday 06:00 IST (00:30 UTC): prepare the payout list; an admin marks each transfer paid
 select cron.schedule('plan-payouts', '30 0 * * 1', $$select public.plan_payouts()$$);
+
+-- ML (plan section 5): nightly service-due reminders; the forecast and retraining run in GitHub Actions
+select cron.schedule('service-due-reminders', '0 4 * * *',
+  $$select public.enqueue_job('batch', 'reminders.service_due', '{}'::jsonb,
+                              'reminders:' || to_char(now(), 'YYYY-MM-DD'))$$);
