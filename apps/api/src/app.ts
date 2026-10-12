@@ -6,12 +6,15 @@ import { authenticate, type AuthDeps } from './auth/middleware';
 import { errorHandler, HttpError } from './http/errors';
 import { meRouter, type ProfileRepo } from './routes/me';
 import { bookingsRouter, type BookingStore, type Dispatcher } from './routes/bookings';
+import { webhooksRouter } from './routes/webhooks';
+import type { NotificationStore } from './worker/ports';
 
 export interface AppDeps {
   auth: AuthDeps;
   profiles: ProfileRepo;
   bookings?: BookingStore;
   dispatch?: Dispatcher;
+  notifications?: NotificationStore;
 }
 
 export function createApp(config: Config, deps?: AppDeps): Express {
@@ -19,11 +22,30 @@ export function createApp(config: Config, deps?: AppDeps): Express {
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(cors({ origin: config.CORS_ORIGINS.split(',').map((s) => s.trim()) }));
-  app.use(express.json({ limit: '100kb' }));
+  // keep the raw body: webhook signatures are computed over the exact bytes
+  app.use(
+    express.json({
+      limit: '100kb',
+      verify: (req, _res, buf) => {
+        (req as { rawBody?: Buffer }).rawBody = buf;
+      },
+    }),
+  );
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', service: 'servigo-api' });
   });
+
+  if (deps?.notifications) {
+    app.use(
+      '/webhooks',
+      webhooksRouter(deps.notifications, {
+        whatsappAppSecret: config.WHATSAPP_APP_SECRET,
+        whatsappVerifyToken: config.WHATSAPP_VERIFY_TOKEN,
+        smsWebhookToken: config.SMS_WEBHOOK_TOKEN,
+      }),
+    );
+  }
 
   if (deps) {
     const auth = authenticate(deps.auth);
