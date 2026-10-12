@@ -52,8 +52,10 @@ git history**, and the repository is public on GitHub.
 - TCS under section 52 is recorded at a configurable rate (`platform_settings.tcs_rate`, default 0.5%) so the
   ledger is ready, but whether ServiGo must collect it, and at what rate, **must be confirmed with a
   chartered accountant before any real-money launch**.
-- Location is collected only at booking time with a consent screen; analytics tables use H3 cells, not
-  exact coordinates (DPDP Act 2023).
+- Location is used to find workshops and is only taken from an address the user saved or a pin they
+  placed. Training exports use H3 cells instead of exact coordinates. A recorded consent event and the
+  one-screen pilot notice from the plan (DPDP Act 2023) are **not built yet**; the onboarding screen only
+  explains how location is used.
 
 ## Known gaps
 

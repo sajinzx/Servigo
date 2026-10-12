@@ -35,4 +35,4 @@ The 20 issues from the implementation plan (section 1), what changed, and the te
 | C1 | Bare `axios`, wrong base URL | One `api()` client with the base URL from env and the user's token | `apps/web/tests/lib.test.ts` |
 | C2 | `localhost:3000` hard-coded | `VITE_API_URL` | `apps/web/src/lib/env.ts` |
 | C3 | No design system, guards, or loading/error states | Tokens, UI kit, `RequireRole`, skeleton / empty / error states on every data screen | `apps/web/tests/components.test.tsx` |
-| C4 | No tests, migrations, env example, CI, deploy config | Jest + Vitest + pytest, 15 migrations, `.env.example` per app, GitHub Actions, `render.yaml`, `vercel.json` | `.github/workflows/ci.yml` |
+| C4 | No tests, migrations, env example, CI, deploy config | Jest + Vitest + pytest, 16 migration files, `.env.example` per app, GitHub Actions, `render.yaml`, `vercel.json` | `.github/workflows/ci.yml` |
