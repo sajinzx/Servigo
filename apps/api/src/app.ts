@@ -5,10 +5,13 @@ import type { Config } from './config';
 import { authenticate, type AuthDeps } from './auth/middleware';
 import { errorHandler, HttpError } from './http/errors';
 import { meRouter, type ProfileRepo } from './routes/me';
+import { bookingsRouter, type BookingStore, type Dispatcher } from './routes/bookings';
 
 export interface AppDeps {
   auth: AuthDeps;
   profiles: ProfileRepo;
+  bookings?: BookingStore;
+  dispatch?: Dispatcher;
 }
 
 export function createApp(config: Config, deps?: AppDeps): Express {
@@ -25,6 +28,9 @@ export function createApp(config: Config, deps?: AppDeps): Express {
   if (deps) {
     const auth = authenticate(deps.auth);
     app.use('/api/me', meRouter(deps.profiles, auth));
+    if (deps.bookings) {
+      app.use('/api/bookings', bookingsRouter(deps.bookings, auth, deps.dispatch));
+    }
   }
 
   app.use((_req, _res, next) => next(new HttpError(404, 'route not found', 'not_found')));
