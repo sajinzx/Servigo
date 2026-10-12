@@ -203,7 +203,12 @@ begin
   insert into public.booking_events (booking_id, from_status, to_status, actor_id, actor_role)
   values (b.id, null, 'requested', p_customer, 'customer');
 
-  return public.transition_booking(b.id, 'matching', null, 'system', '{}'::jsonb);
+  b := public.transition_booking(b.id, 'matching', null, 'system', '{}'::jsonb);
+
+  -- allocation is a durable job, queued in this same transaction
+  perform public.enqueue_job('realtime', 'dispatch.booking',
+                             jsonb_build_object('booking_id', b.id), 'booking:' || b.id || ':dispatch:0');
+  return b;
 end $$;
 
 -- ---------------------------------------------------------------------------
