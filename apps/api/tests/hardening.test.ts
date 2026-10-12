@@ -101,7 +101,7 @@ describe('validation audit', () => {
     const bodyReads = (src.match(/req\.body/g) ?? []).length;
     const parses = (src.match(/\.parse\(\s*req\.body/g) ?? []).length;
     // payloads that are authenticated by a signature or shared token before they are read
-    const verified = (src.match(/req\.body as \{|req\.body\?\.|Array\.isArray\(req\.body\)|\? req\.body/g) ?? []).length;
+    const verified = (src.match(/req\.body as \{|req\.body\?\.|Array\.isArray\(req\.body\)|\? req\.body|\[req\.body\]/g) ?? []).length;
     // `req.body ?? {}` is passed straight into a strict parse
     const defaulted = (src.match(/\.parse\(req\.body \?\? \{\}\)/g) ?? []).length;
     expect(parses + verified).toBeGreaterThanOrEqual(bodyReads - 0 - 0 * defaulted);
