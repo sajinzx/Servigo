@@ -9,7 +9,7 @@
     "start": "node dist/server.js",
     "worker": "node dist/worker/main.js",
     "worker:dev": "tsx watch src/worker/main.ts",
-    "test": "jest --runInBand",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --runInBand",
     "lint": "eslint src tests --ext .ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
