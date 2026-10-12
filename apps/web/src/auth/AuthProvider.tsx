@@ -22,6 +22,9 @@ interface AuthState {
   signInWithGoogle(): Promise<void>;
   sendPhoneOtp(phone: string): Promise<void>;
   verifyPhoneOtp(phone: string, token: string): Promise<void>;
+  /** for an already signed-in user (e.g. Google): attach and verify a phone on the SAME account */
+  startPhoneLink(phone: string): Promise<void>;
+  confirmPhoneLink(phone: string, token: string): Promise<void>;
   signInWithEmail(email: string, password: string): Promise<void>;
   signUpWithEmail(email: string, password: string, name: string): Promise<void>;
   signOut(): Promise<void>;
@@ -93,6 +96,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async verifyPhoneOtp(phone, token) {
         const { error } = await supabase!.auth.verifyOtp({ phone, token, type: 'sms' });
         if (error) throw error;
+      },
+      async startPhoneLink(phone) {
+        const { error } = await supabase!.auth.updateUser({ phone });
+        if (error) throw error;
+      },
+      async confirmPhoneLink(phone, token) {
+        const { error } = await supabase!.auth.verifyOtp({ phone, token, type: 'phone_change' });
+        if (error) throw error;
+        await loadProfile(session);
       },
       async signInWithEmail(email, password) {
         const { error } = await supabase!.auth.signInWithPassword({ email, password });
