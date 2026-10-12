@@ -1,0 +1,75 @@
+# Render blueprint: the Core API, the background worker and the ML service.
+# The web app deploys to Vercel (apps/web/vercel.json); the database is Supabase.
+# Secrets are set in the Render dashboard (sync: false), never in this file.
+
+services:
+  - type: web
+    name: servigo-api
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm ci && npm run build -w apps/api
+    startCommand: node apps/api/dist/server.js
+    healthCheckPath: /ready
+    envVars:
+      - { key: NODE_VERSION, value: "20" }
+      - { key: NODE_ENV, value: production }
+      - { key: CORS_ORIGINS, sync: false }
+      - { key: SUPABASE_URL, sync: false }
+      - { key: SUPABASE_SERVICE_ROLE_KEY, sync: false }
+      - { key: SUPABASE_JWT_SECRET, sync: false }
+      - { key: DATABASE_URL, sync: false }
+      - { key: PAYOUT_ENCRYPTION_KEY, sync: false }
+      - { key: UPI_PAYEE_ID, sync: false }
+      - { key: UPI_PAYEE_NAME, value: ServiGo }
+      - { key: RAZORPAY_KEY_ID, sync: false }
+      - { key: RAZORPAY_KEY_SECRET, sync: false }
+      - { key: RAZORPAY_WEBHOOK_SECRET, sync: false }
+      - { key: WHATSAPP_APP_SECRET, sync: false }
+      - { key: WHATSAPP_VERIFY_TOKEN, sync: false }
+      - { key: SMS_WEBHOOK_TOKEN, sync: false }
+      - { key: ML_SERVICE_URL, sync: false }
+      - { key: ML_API_KEY, sync: false }
+
+  - type: worker
+    name: servigo-worker
+    runtime: node
+    plan: starter # a free web service sleeps; the queue worker must not
+    rootDir: .
+    buildCommand: npm ci && npm run build -w apps/api
+    startCommand: node apps/api/dist/worker/main.js
+    envVars:
+      - { key: NODE_VERSION, value: "20" }
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, sync: false }
+      - { key: SUPABASE_URL, sync: false }
+      - { key: SUPABASE_SERVICE_ROLE_KEY, sync: false }
+      - { key: OSRM_URL, value: "https://router.project-osrm.org" }
+      - { key: ML_SERVICE_URL, sync: false }
+      - { key: ML_API_KEY, sync: false }
+      - { key: WHATSAPP_PHONE_NUMBER_ID, sync: false }
+      - { key: WHATSAPP_ACCESS_TOKEN, sync: false }
+      - { key: MSG91_AUTH_KEY, sync: false }
+      - { key: MSG91_TEMPLATE_IDS, sync: false }
+      - { key: RESEND_API_KEY, sync: false }
+      - { key: EMAIL_FROM, sync: false }
+      - { key: FCM_PROJECT_ID, sync: false }
+      - { key: FCM_CLIENT_EMAIL, sync: false }
+      - { key: FCM_PRIVATE_KEY, sync: false }
+
+  - type: web
+    name: servigo-ml
+    runtime: python
+    plan: free
+    rootDir: services/ml
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - { key: PYTHON_VERSION, value: "3.11.9" }
+      - { key: ARTIFACT_DIR, value: /var/data/artifacts }
+      - { key: ML_API_KEY, sync: false }
+    disk:
+      name: ml-artifacts
+      mountPath: /var/data
+      sizeGB: 1

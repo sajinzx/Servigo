@@ -15,14 +15,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
-      - run: npm test
       - run: npm run build
+      # includes the database tests: every migration is applied to an in-process Postgres
+      - run: npm test
 
-  ml:
+  python:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/ml
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,5 +28,12 @@ jobs:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: services/ml/requirements.txt
-      - run: pip install -r requirements.txt
-      - run: pytest -q
+      - run: pip install -r services/ml/requirements.txt
+      - name: PostGIS find_candidates() is generated, make sure it is current
+        run: python supabase/tools/gen_postgis_find_candidates.py --check
+      - name: simulator
+        working-directory: data/simulator
+        run: python -m pytest -q
+      - name: ml service
+        working-directory: services/ml
+        run: python -m pytest -q
