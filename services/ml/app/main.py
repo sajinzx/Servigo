@@ -207,6 +207,40 @@ def predict_acceptance(body: AcceptanceIn) -> dict:
     return out
 
 
+# ---- M6 -----------------------------------------------------------------------
+
+class ServiceDueIn(BaseModel):
+    kind: str = Field(pattern="^(car|bike)$")
+    age_years: float = Field(default=5.0, ge=0, le=40)
+    km_per_day: float = Field(default=25.0, gt=0, le=1000)
+    days_since_service: float = Field(default=0.0, ge=0)
+    within_days: float = Field(default=30.0, gt=0, le=365)
+
+
+@app.post("/predict/service-due", dependencies=[Depends(require_key)])
+def predict_service_due(body: ServiceDueIn) -> dict:
+    t0 = time.perf_counter()
+    if "service_due" in state.models:
+        m = state.models["service_due"][1]
+        df = pd.DataFrame({"km_per_day": [body.km_per_day], "age_years": [body.age_years],
+                           "is_car": [1 if body.kind == "car" else 0]})
+        median = float(m.median_days(df)[0])
+        p = float(m.prob_due(df, np.array([body.days_since_service]), body.within_days)[0])
+    else:
+        # fixed rule: every 5,000 km or 6 months
+        median = float(baselines.interval_rule_days(np.array([body.km_per_day]))[0])
+        p = 1.0 if body.days_since_service + body.within_days >= median else 0.0
+    out = {
+        "median_days_between_services": round(median, 1),
+        "days_left": round(max(median - body.days_since_service, 0.0), 1),
+        "probability_due": round(p, 4),
+        "within_days": body.within_days,
+        "model_version": state.version("service_due"),
+    }
+    state.log("service_due", body.model_dump(), out, t0)
+    return out
+
+
 # ---- peak-load batch assignment (Hungarian) --------------------------------------
 
 class Candidate(BaseModel):
