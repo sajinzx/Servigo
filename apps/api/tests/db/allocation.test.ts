@@ -74,7 +74,6 @@ async function world(): Promise<W> {
     [customer, bikeModel],
   );
 
-  let n = 0;
   const shop: W['shop'] = async (name, lat, lng, staff, o = {}) => {
     const owner = await addUser(db, { name: `${name} owner` });
     await db.query(`update public.profiles set role = 'mechanic' where id = $1`, [owner]);
@@ -93,7 +92,6 @@ async function world(): Promise<W> {
         );
       }
     }
-    n++;
     return { id, owner };
   };
 

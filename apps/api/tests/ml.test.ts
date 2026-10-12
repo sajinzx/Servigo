@@ -195,7 +195,7 @@ describe('quote and triage routes', () => {
     expect(res.body.days_left).toBeCloseTo(66.7, 0);
   });
 
-  it('does not reveal a vehicle that is not the caller's', async () => {
+  it("does not reveal a vehicle that is not the caller's", async () => {
     const other = '99999999-9999-4999-8999-999999999999';
     const res = await request(appWith(undefined)).get(`/api/vehicles/${other}/service-due`).set(bearer);
     expect(res.status).toBe(404);
