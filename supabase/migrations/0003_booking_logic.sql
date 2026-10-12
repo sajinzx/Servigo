@@ -156,7 +156,7 @@ begin
   q_name := case when p_to in ('offered', 'accepted', 'matching') then 'realtime' else 'notify' end;
   perform public.enqueue_job(
     q_name, 'booking.status_changed',
-    jsonb_build_object('booking_id', b.id, 'ref', b.ref, 'status', p_to,
+    jsonb_build_object('booking_id', b.id, 'ref', b.ref, 'status', p_to, 'from', prev_status,
                        'customer_id', b.customer_id, 'workshop_id', b.workshop_id),
     'booking:' || b.id || ':' || p_to || ':' || ev_id
   );
