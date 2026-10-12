@@ -19,6 +19,9 @@ export const DEFAULT_WEIGHTS: Weights = { eta: 0.35, rating: 0.2, load: 0.15, ac
 export const RATING_PRIOR_WEIGHT = 10;
 export const DEFAULT_PLATFORM_MEAN = 4.0;
 
+/** Score multiplier for a workshop flagged by the acceptance floor. */
+export const LOW_ACCEPTANCE_PENALTY = 0.85;
+
 /** Prior strength and mean for the smoothed acceptance rate. */
 export const ACCEPT_PRIOR_WEIGHT = 10;
 export const DEFAULT_ACCEPT_PRIOR = 0.6;
@@ -37,6 +40,8 @@ export interface Candidate {
   accepted30d: number;
   /** replaced by the ML model's probability when available */
   pAccept?: number;
+  /** acceptance rate under 40% over the last 20 offers (trust & safety rule) */
+  lowAcceptance?: boolean;
 }
 
 export interface ScoreContext {
@@ -96,12 +101,13 @@ export function scoreCandidates(candidates: Candidate[], ctx: ScoreContext = {})
       accept: c.pAccept ?? smoothedAcceptRate(c.accepted30d, c.offers30d, ctx.platformAcceptRate),
       fairness: fairness(c.jobsToday),
     };
-    const score =
+    const raw =
       w.eta * parts.eta +
       w.rating * parts.rating +
       w.load * parts.load +
       w.accept * parts.accept +
       w.fairness * parts.fairness;
+    const score = c.lowAcceptance ? raw * LOW_ACCEPTANCE_PENALTY : raw;
     return { candidate: c, score, parts };
   });
 
