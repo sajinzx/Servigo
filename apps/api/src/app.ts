@@ -13,6 +13,9 @@ import { adminRouter } from './routes/admin';
 import { safetyRouter } from './routes/safety';
 import { paymentsRouter, type PaymentsDeps } from './routes/payments';
 import { financeRouter } from './routes/finance';
+import { quotesRouter } from './routes/quotes';
+import { baselineQuoter, mlQuoter, type Quoter } from './domain/quoter';
+import type { MlClient } from './ml/client';
 import type { Rpc } from './db/rpc';
 import type { NotificationStore } from './worker/ports';
 
@@ -28,6 +31,8 @@ export interface AppDeps {
   payoutKey?: Buffer;
   /** UPI payee and Razorpay credentials; payments are disabled for whatever is missing */
   payments?: Omit<PaymentsDeps, 'rpc'>;
+  /** ML service client; absent or unreachable means every prediction uses its baseline */
+  ml?: MlClient;
 }
 
 export function createApp(config: Config, deps?: AppDeps): Express {
@@ -63,8 +68,10 @@ export function createApp(config: Config, deps?: AppDeps): Express {
   if (deps) {
     const auth = authenticate(deps.auth);
     app.use('/api/me', meRouter(deps.profiles, auth));
+    const quoter: Quoter = deps.ml?.enabled ? mlQuoter(deps.ml) : baselineQuoter;
     if (deps.bookings) {
-      app.use('/api/bookings', bookingsRouter(deps.bookings, auth));
+      app.use('/api/bookings', bookingsRouter(deps.bookings, auth, quoter));
+      app.use('/api', quotesRouter(deps.bookings, quoter, deps.ml ?? null, auth));
     }
     if (deps.offers) {
       app.use('/api/offers', offersRouter(deps.offers, auth));

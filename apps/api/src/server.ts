@@ -7,6 +7,7 @@ import { supabaseBookings } from './repos/bookings';
 import { supabaseOffers } from './repos/offers';
 import { supabaseRpc } from './db/rpc';
 import { parseKey } from './domain/secrets';
+import { MlClient } from './ml/client';
 import { Pool } from 'pg';
 import { pgNotificationStore } from './worker/pgNotifications';
 
@@ -21,6 +22,11 @@ if (db) {
     profiles,
     bookings: supabaseBookings(db),
     offers: supabaseOffers(db),
+    ml: new MlClient({
+      baseUrl: config.ML_SERVICE_URL,
+      apiKey: config.ML_API_KEY,
+      onFallback: (path, why) => console.warn(`ml ${path} fell back: ${why}`),
+    }),
     rpc: supabaseRpc(db),
     payoutKey: config.PAYOUT_ENCRYPTION_KEY ? parseKey(config.PAYOUT_ENCRYPTION_KEY) : undefined,
     payments: {

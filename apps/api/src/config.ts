@@ -8,6 +8,7 @@ const schema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   SUPABASE_JWT_SECRET: z.string().min(16).optional(),
   ML_SERVICE_URL: z.string().url().optional(),
+  ML_API_KEY: z.string().optional(),
   OSRM_URL: z.string().url().default('https://router.project-osrm.org'),
   UPI_PAYEE_ID: z.string().default(''),
   UPI_PAYEE_NAME: z.string().default('ServiGo'),

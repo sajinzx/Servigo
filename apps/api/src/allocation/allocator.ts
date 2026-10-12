@@ -2,7 +2,13 @@ import type { Sql } from '../db/sql';
 import { RADIUS_STEPS_KM, type Point } from '../domain/geo';
 import { assign } from '../domain/hungarian';
 import type { EtaProvider } from '../domain/osrm';
-import { scoreCandidates, type Candidate, type ScoreContext, type Scored } from '../domain/scoring';
+import {
+  scoreCandidates,
+  type Candidate,
+  type ScoreContext,
+  type Scored,
+  type Weights,
+} from '../domain/scoring';
 
 /** Fewer than this many candidates at a radius means we widen (plan 4.1). */
 export const MIN_CANDIDATES = 3;
@@ -44,7 +50,18 @@ export interface AllocatorOptions {
   eta: EtaProvider;
   score?: ScoreContext;
   /** optional ML hook: returns P(accept) per workshop, or null to use the baseline */
-  acceptModel?: (bookingId: string, workshopIds: string[]) => Promise<Record<string, number> | null>;
+  acceptModel?: (
+    offers: {
+      workshop_id: string;
+      distance_km: number;
+      active_jobs: number;
+      staff_count: number;
+      hour: number;
+      weekday: number;
+    }[],
+  ) => Promise<Record<string, number> | null>;
+  /** weights from the tuned allocation entry; defaults are the plan's starting values */
+  weights?: () => Promise<Weights | null>;
   log?: (msg: string, extra?: unknown) => void;
 }
 
@@ -85,9 +102,22 @@ export class Allocator {
     );
     if (usedFallback) this.opts.log?.('eta fallback used', { booking: booking.id });
 
+    const now = new Date();
     const ml = this.opts.acceptModel
-      ? await this.opts.acceptModel(booking.id, rows.map((c) => c.workshop_id)).catch(() => null)
+      ? await this.opts
+          .acceptModel(
+            rows.map((c) => ({
+              workshop_id: c.workshop_id,
+              distance_km: c.distance_km,
+              active_jobs: c.active_jobs,
+              staff_count: c.staff_count,
+              hour: now.getHours(),
+              weekday: (now.getDay() + 6) % 7,
+            })),
+          )
+          .catch(() => null)
       : null;
+    const tuned = this.opts.weights ? await this.opts.weights().catch(() => null) : null;
 
     const cands: Candidate[] = rows.map((c, i) => ({
       workshopId: c.workshop_id,
@@ -103,7 +133,7 @@ export class Allocator {
       pAccept: ml?.[c.workshop_id],
       lowAcceptance: c.low_acceptance,
     }));
-    return scoreCandidates(cands, this.opts.score);
+    return scoreCandidates(cands, { ...this.opts.score, ...(tuned ? { weights: tuned } : {}) });
   }
 
   /** Radius to start from: one step wider for every three misses so far. */

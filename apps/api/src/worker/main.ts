@@ -10,6 +10,9 @@ import { allocationHandlers, scheduleBatchWindow, BATCH_WINDOW_SECONDS } from '.
 import { osrmEtaProvider } from '../domain/osrm';
 import { billingHandlers, type InvoiceStorage } from '../billing/handlers';
 import { createClient } from '@supabase/supabase-js';
+import { MlClient } from '../ml/client';
+import { reminderHandlers } from './reminders';
+import type { Weights } from '../domain/scoring';
 import { emailChannel, pushChannel, smsChannel, whatsappChannel } from './channels';
 import type { Channel, ChannelName } from './ports';
 
@@ -50,7 +53,18 @@ if (env.FCM_PROJECT_ID && env.FCM_CLIENT_EMAIL && env.FCM_PRIVATE_KEY) {
 }
 
 const notifier = new Notifier({ store, queue, channels });
+const ml = new MlClient({
+  baseUrl: env.ML_SERVICE_URL,
+  apiKey: env.ML_API_KEY,
+  onFallback: (path, why) => console.warn(`ml ${path} fell back: ${why}`),
+});
+
 const allocator = new Allocator(pool, {
+  acceptModel: (offers) => ml.acceptance(offers),
+  weights: async () => {
+    const w = await ml.weights();
+    return w && 'eta' in w ? (w as unknown as Weights) : null;
+  },
   eta: osrmEtaProvider({
     baseUrl: env.OSRM_URL ?? 'https://router.project-osrm.org',
     onFallback: (reason) => console.warn('osrm fallback:', reason),
@@ -85,7 +99,11 @@ const handlers = buildHandlers({
   store,
   queue,
   notifier,
-  extra: { ...allocationHandlers(pool, allocator), ...billingHandlers(pool, storage) },
+  extra: {
+    ...allocationHandlers(pool, allocator),
+    ...billingHandlers(pool, storage),
+    ...reminderHandlers(pool, ml, queue),
+  },
 });
 
 // batch assignment window (idempotent per window, so several workers are fine)
