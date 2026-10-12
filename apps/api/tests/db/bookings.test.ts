@@ -33,8 +33,8 @@ async function buildWorld(staffCount = 1): Promise<World> {
   await db.query(`update public.profiles set role = 'admin' where id = $1`, [admin]);
 
   const ws = await db.query<{ id: string }>(
-    `insert into public.workshops (owner_id, name, city, lat, lng, staff_count)
-     values ($1, 'Anna Nagar Auto', 'Chennai', 13.085, 80.2101, $2) returning id`,
+    `insert into public.workshops (owner_id, name, city, lat, lng, staff_count, gst_registered)
+     values ($1, 'Anna Nagar Auto', 'Chennai', 13.085, 80.2101, $2, true) returning id`,
     [mechanic, staffCount],
   );
   await db.query(

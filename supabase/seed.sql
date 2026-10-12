@@ -43,22 +43,22 @@ insert into public.vehicle_models (kind, make, model, fuel, segment, engine_cc, 
   ('bike','KTM','Duke 390','petrol','premium',373,null)
 on conflict do nothing;
 
-insert into public.workshops (name, phone, city, lat, lng, staff_count, vehicle_kinds, is_demo, stage, verified_at) values
-  ('Anna Nagar Auto Care','+919840012345','Chennai',13.085,80.2101,5,'{car}',true,'active',now()),
-  ('T Nagar Motors','+919840056789','Chennai',13.0418,80.2341,8,'{car}',true,'active',now()),
-  ('Velachery Bike Works','+919884011111','Chennai',12.9815,80.218,3,'{bike}',true,'active',now()),
-  ('Adyar Quick Fix','+919790022222','Chennai',13.0012,80.2565,2,'{bike,car}',true,'active',now()),
-  ('Koramangala Car Clinic','+919900033333','Bangalore',12.9352,77.6245,6,'{car}',true,'active',now()),
-  ('Indiranagar Garage','+919910044444','Bangalore',12.9784,77.6408,10,'{bike,car}',true,'active',now()),
-  ('Bandra Auto Studio','+919820055555','Mumbai',19.0596,72.8295,4,'{car}',true,'active',now()),
-  ('Andheri Bike Hub','+919821066666','Mumbai',19.1136,72.8697,7,'{bike}',true,'active',now()),
-  ('Koregaon Park Garage','+919500077777','Pune',18.5362,73.894,3,'{bike,car}',true,'active',now()),
-  ('Jubilee Hills Car Care','+919600088888','Hyderabad',17.4326,78.4071,1,'{car}',true,'active',now()),
-  ('Connaught Place Auto','+919810099999','Delhi',28.6315,77.2167,5,'{bike,car}',true,'active',now()),
-  ('Salt Lake Car Works','+919330010101','Kolkata',22.5867,88.417,12,'{car}',true,'active',now()),
-  ('Alwarpet Bike Garage','+919840122233','Chennai',13.0339,80.254,4,'{bike}',true,'active',now()),
-  ('Whitefield Auto Hub','+919980044455','Bangalore',12.9698,77.75,6,'{bike,car}',true,'active',now()),
-  ('Hitech City Car Electric','+919700066677','Hyderabad',17.4435,78.3772,9,'{car}',true,'active',now());
+insert into public.workshops (name, phone, city, lat, lng, staff_count, vehicle_kinds, is_demo, stage, verified_at, gst_registered) values
+  ('Anna Nagar Auto Care','+919840012345','Chennai',13.085,80.2101,5,'{car}',true,'active',now(),true),
+  ('T Nagar Motors','+919840056789','Chennai',13.0418,80.2341,8,'{car}',true,'active',now(),true),
+  ('Velachery Bike Works','+919884011111','Chennai',12.9815,80.218,3,'{bike}',true,'active',now(),true),
+  ('Adyar Quick Fix','+919790022222','Chennai',13.0012,80.2565,2,'{bike,car}',true,'active',now(),true),
+  ('Koramangala Car Clinic','+919900033333','Bangalore',12.9352,77.6245,6,'{car}',true,'active',now(),true),
+  ('Indiranagar Garage','+919910044444','Bangalore',12.9784,77.6408,10,'{bike,car}',true,'active',now(),true),
+  ('Bandra Auto Studio','+919820055555','Mumbai',19.0596,72.8295,4,'{car}',true,'active',now(),true),
+  ('Andheri Bike Hub','+919821066666','Mumbai',19.1136,72.8697,7,'{bike}',true,'active',now(),true),
+  ('Koregaon Park Garage','+919500077777','Pune',18.5362,73.894,3,'{bike,car}',true,'active',now(),true),
+  ('Jubilee Hills Car Care','+919600088888','Hyderabad',17.4326,78.4071,1,'{car}',true,'active',now(),true),
+  ('Connaught Place Auto','+919810099999','Delhi',28.6315,77.2167,5,'{bike,car}',true,'active',now(),true),
+  ('Salt Lake Car Works','+919330010101','Kolkata',22.5867,88.417,12,'{car}',true,'active',now(),true),
+  ('Alwarpet Bike Garage','+919840122233','Chennai',13.0339,80.254,4,'{bike}',true,'active',now(),true),
+  ('Whitefield Auto Hub','+919980044455','Bangalore',12.9698,77.75,6,'{bike,car}',true,'active',now(),true),
+  ('Hitech City Car Electric','+919700066677','Hyderabad',17.4435,78.3772,9,'{car}',true,'active',now(),true);
 
 insert into public.workshop_services (workshop_id, service_id)
 select w.id, s.id from (values

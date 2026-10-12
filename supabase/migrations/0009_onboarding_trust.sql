@@ -12,7 +12,8 @@ alter table public.workshops
   add column completed_jobs   integer not null default 0,
   add column suspended_until  timestamptz,
   add column suspension_reason text,
-  add column low_acceptance   boolean not null default false;
+  add column low_acceptance   boolean not null default false,
+  add column gst_registered   boolean not null default false;
 
 -- the verification and rating columns are never edited by the workshop itself
 create or replace function public.workshops_guard() returns trigger language plpgsql as $$
@@ -347,10 +348,12 @@ begin
 
   insert into public.workshops
     (owner_id, name, phone, city, lat, lng, staff_count, open_hours, stage, verified_at,
-     vehicle_kinds)
+     gst_registered, vehicle_kinds)
   values (app.applicant_id, app.shop_name, app.phone, app.city, app.lat, app.lng, app.staff_count,
           coalesce(app.open_hours, '{"mon":["09:00","19:00"],"tue":["09:00","19:00"],"wed":["09:00","19:00"],"thu":["09:00","19:00"],"fri":["09:00","19:00"],"sat":["09:00","19:00"]}'::jsonb),
           'probation', now(),
+          exists (select 1 from public.workshop_documents d
+                   where d.application_id = app.id and d.kind = 'gstin'),
           coalesce((select array_agg(distinct s.vehicle_kind) from public.services s
                      where s.id = any (app.service_ids)), '{car,bike}'::public.vehicle_kind[]))
   returning * into w;

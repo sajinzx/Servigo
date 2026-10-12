@@ -228,16 +228,20 @@ language plpgsql as $$
 declare
   b     public.bookings;
   total numeric;
+  rate  numeric;
 begin
   if p_labour is null or p_labour < 0 or coalesce(p_parts, 0) < 0 then
     raise exception 'labour and parts must be zero or more';
   end if;
-  total := round((p_labour + coalesce(p_parts, 0)) * (1 + public.gst_rate()), 2);
-
   select * into b from public.bookings where id = p_booking_id for update;
   if not found then
     raise exception 'booking % not found', p_booking_id;
   end if;
+
+  -- only a GST-registered workshop may charge GST; others issue a bill of supply
+  select case when w.gst_registered then public.gst_rate() else 0 end into rate
+    from public.workshops w where w.id = b.workshop_id;
+  total := round((p_labour + coalesce(p_parts, 0)) * (1 + coalesce(rate, public.gst_rate())), 2);
 
   update public.bookings set
     labour_amount = p_labour,
