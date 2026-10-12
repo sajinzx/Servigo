@@ -52,9 +52,6 @@ export interface BookingStore {
   review(bookingId: string, customerId: string, rating: number, comment: string | null): Promise<void>;
 }
 
-/** Called after a booking is created or sent back to matching; kicks off allocation. */
-export type Dispatcher = (bookingId: string) => Promise<void>;
-
 // `.strict()` makes a client-supplied price a validation error instead of silently ignored
 const createSchema = z
   .object({
@@ -85,11 +82,7 @@ const bookingId = (req: { params: Record<string, string | string[]> }) =>
 
 const cancelSchema = z.object({ reason: z.string().trim().max(200).optional() }).strict();
 
-export function bookingsRouter(
-  store: BookingStore,
-  auth: RequestHandler,
-  dispatch: Dispatcher = async () => undefined,
-): Router {
+export function bookingsRouter(store: BookingStore, auth: RequestHandler): Router {
   const r = Router();
   r.use(auth);
 
@@ -123,9 +116,7 @@ export function bookingsRouter(
         predictedDurationMin: ctx.baseDurationMin,
       });
 
-      // allocation must not make the booking fail; a stuck booking is retried by the queue
-      dispatch(booking.id).catch((e) => console.error('dispatch failed', booking.id, e));
-
+      // create_booking queued the dispatch job in the same transaction
       res.status(201).json(booking);
     } catch (e) {
       next(e);

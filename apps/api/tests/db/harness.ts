@@ -5,7 +5,7 @@ import path from 'path';
 /**
  * Test harness: an in-process Postgres with a small stand-in for the parts of
  * Supabase our migrations rely on (auth schema, auth.uid(), the three API roles).
- * Migrations named *.postgis.sql need the PostGIS extension and are skipped here.
+ * Migrations named *.postgis.sql or *.supabase.sql need extensions we do not have here and are skipped.
  */
 const MIGRATIONS_DIR = path.resolve(__dirname, '../../../../supabase/migrations');
 
@@ -38,7 +38,7 @@ export async function createDb(opts: { upTo?: string } = {}): Promise<PGlite> {
   const db = new PGlite();
   await db.exec(SUPABASE_SHIM);
   const files = readdirSync(MIGRATIONS_DIR)
-    .filter((f) => f.endsWith('.sql') && !f.endsWith('.postgis.sql'))
+    .filter((f) => f.endsWith('.sql') && !f.endsWith('.postgis.sql') && !f.endsWith('.supabase.sql'))
     .sort();
   for (const file of files) {
     if (opts.upTo && file > opts.upTo) break;

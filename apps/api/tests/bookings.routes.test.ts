@@ -19,7 +19,6 @@ const bearer = (sub: string) => ({ Authorization: `Bearer ${token(sub)}` });
 function setup() {
   const created: CreateBookingArgs[] = [];
   const calls: string[] = [];
-  const dispatched: string[] = [];
   const row = (over: Partial<BookingRow> = {}): BookingRow => ({
     id: B1, ref: 'BK-10001', status: 'matching', customer_id: 'cust', workshop_id: null,
     quote_low: 0, quote_high: 0, final_price: null, needs_price_approval: false, ...over,
@@ -55,16 +54,13 @@ function setup() {
     auth: { jwtSecret: SECRET, lookupRole: async (id) => roles[id] ?? null },
     profiles: { get: async () => null, update: async () => { throw new Error('unused'); } },
     bookings: store,
-    dispatch: async (id) => {
-      dispatched.push(id);
-    },
   });
-  return { app, created, calls, dispatched };
+  return { app, created, calls };
 }
 
 describe('POST /api/bookings', () => {
-  it('prices the booking on the server and starts allocation', async () => {
-    const { app, created, dispatched } = setup();
+  it('prices the booking on the server', async () => {
+    const { app, created } = setup();
     const res = await request(app)
       .post('/api/bookings')
       .set(bearer('cust'))
@@ -73,7 +69,6 @@ describe('POST /api/bookings', () => {
     expect(created[0].quoteLow).toBeGreaterThan(0);
     expect(created[0].quoteHigh).toBeGreaterThan(created[0].quoteLow);
     expect(created[0].lat).toBe(13.085);
-    expect(dispatched).toEqual([B1]);
   });
 
   it('rejects a price sent by the client', async () => {

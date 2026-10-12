@@ -5,6 +5,9 @@ import { Notifier } from './notifier';
 import { pgNotificationStore } from './pgNotifications';
 import { pgQueue } from './pgQueue';
 import { runForever } from './runner';
+import { Allocator } from '../allocation/allocator';
+import { allocationHandlers, scheduleBatchWindow, BATCH_WINDOW_SECONDS } from '../allocation/handlers';
+import { osrmEtaProvider } from '../domain/osrm';
 import { emailChannel, pushChannel, smsChannel, whatsappChannel } from './channels';
 import type { Channel, ChannelName } from './ports';
 
@@ -45,7 +48,25 @@ if (env.FCM_PROJECT_ID && env.FCM_CLIENT_EMAIL && env.FCM_PRIVATE_KEY) {
 }
 
 const notifier = new Notifier({ store, queue, channels });
-const handlers = buildHandlers({ store, queue, notifier });
+const allocator = new Allocator(pool, {
+  eta: osrmEtaProvider({
+    baseUrl: env.OSRM_URL ?? 'https://router.project-osrm.org',
+    onFallback: (reason) => console.warn('osrm fallback:', reason),
+  }),
+  log: (m, x) => console.warn(m, x ?? ''),
+});
+const handlers = buildHandlers({
+  store,
+  queue,
+  notifier,
+  extra: allocationHandlers(pool, allocator),
+});
+
+// batch assignment window (idempotent per window, so several workers are fine)
+const batchTimer = setInterval(
+  () => scheduleBatchWindow(queue).catch((e) => console.error('batch schedule failed', e)),
+  BATCH_WINDOW_SECONDS * 1000,
+);
 
 const abort = new AbortController();
 process.on('SIGTERM', () => abort.abort());
@@ -56,4 +77,7 @@ runForever(queue, handlers, {
   queues: ['realtime', 'notify', 'billing', 'batch'],
   log: (m, x) => console.error(m, x ?? ''),
   signal: abort.signal,
-}).then(() => pool.end());
+}).then(() => {
+  clearInterval(batchTimer);
+  return pool.end();
+});

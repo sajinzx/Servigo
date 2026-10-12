@@ -5,7 +5,8 @@ import type { Config } from './config';
 import { authenticate, type AuthDeps } from './auth/middleware';
 import { errorHandler, HttpError } from './http/errors';
 import { meRouter, type ProfileRepo } from './routes/me';
-import { bookingsRouter, type BookingStore, type Dispatcher } from './routes/bookings';
+import { bookingsRouter, type BookingStore } from './routes/bookings';
+import { offersRouter, type OfferStore } from './routes/offers';
 import { webhooksRouter } from './routes/webhooks';
 import type { NotificationStore } from './worker/ports';
 
@@ -13,7 +14,7 @@ export interface AppDeps {
   auth: AuthDeps;
   profiles: ProfileRepo;
   bookings?: BookingStore;
-  dispatch?: Dispatcher;
+  offers?: OfferStore;
   notifications?: NotificationStore;
 }
 
@@ -51,7 +52,10 @@ export function createApp(config: Config, deps?: AppDeps): Express {
     const auth = authenticate(deps.auth);
     app.use('/api/me', meRouter(deps.profiles, auth));
     if (deps.bookings) {
-      app.use('/api/bookings', bookingsRouter(deps.bookings, auth, deps.dispatch));
+      app.use('/api/bookings', bookingsRouter(deps.bookings, auth));
+    }
+    if (deps.offers) {
+      app.use('/api/offers', offersRouter(deps.offers, auth));
     }
   }
 

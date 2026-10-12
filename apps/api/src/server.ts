@@ -4,6 +4,7 @@ import { loadConfig } from './config';
 import { createAdminClient } from './db/supabase';
 import { supabaseProfiles } from './repos/profiles';
 import { supabaseBookings } from './repos/bookings';
+import { supabaseOffers } from './repos/offers';
 import { Pool } from 'pg';
 import { pgNotificationStore } from './worker/pgNotifications';
 
@@ -17,6 +18,7 @@ if (db) {
     auth: { jwtSecret: config.SUPABASE_JWT_SECRET, lookupRole: (id) => profiles.roleOf(id) },
     profiles,
     bookings: supabaseBookings(db),
+    offers: supabaseOffers(db),
     notifications: process.env.DATABASE_URL
       ? pgNotificationStore(new Pool({ connectionString: process.env.DATABASE_URL, max: 3 }))
       : undefined,
