@@ -11,6 +11,7 @@ const schema = z.object({
   OSRM_URL: z.string().url().default('https://router.project-osrm.org'),
   UPI_PAYEE_ID: z.string().default(''),
   UPI_PAYEE_NAME: z.string().default('ServiGo'),
+  PAYOUT_ENCRYPTION_KEY: z.string().optional(),
   WHATSAPP_APP_SECRET: z.string().optional(),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
   SMS_WEBHOOK_TOKEN: z.string().optional(),

@@ -5,6 +5,8 @@ import { createAdminClient } from './db/supabase';
 import { supabaseProfiles } from './repos/profiles';
 import { supabaseBookings } from './repos/bookings';
 import { supabaseOffers } from './repos/offers';
+import { supabaseRpc } from './db/rpc';
+import { parseKey } from './domain/secrets';
 import { Pool } from 'pg';
 import { pgNotificationStore } from './worker/pgNotifications';
 
@@ -19,6 +21,8 @@ if (db) {
     profiles,
     bookings: supabaseBookings(db),
     offers: supabaseOffers(db),
+    rpc: supabaseRpc(db),
+    payoutKey: config.PAYOUT_ENCRYPTION_KEY ? parseKey(config.PAYOUT_ENCRYPTION_KEY) : undefined,
     notifications: process.env.DATABASE_URL
       ? pgNotificationStore(new Pool({ connectionString: process.env.DATABASE_URL, max: 3 }))
       : undefined,

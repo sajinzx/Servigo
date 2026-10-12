@@ -8,6 +8,10 @@ import { meRouter, type ProfileRepo } from './routes/me';
 import { bookingsRouter, type BookingStore } from './routes/bookings';
 import { offersRouter, type OfferStore } from './routes/offers';
 import { webhooksRouter } from './routes/webhooks';
+import { applicationsRouter } from './routes/applications';
+import { adminRouter } from './routes/admin';
+import { safetyRouter } from './routes/safety';
+import type { Rpc } from './db/rpc';
 import type { NotificationStore } from './worker/ports';
 
 export interface AppDeps {
@@ -16,6 +20,10 @@ export interface AppDeps {
   bookings?: BookingStore;
   offers?: OfferStore;
   notifications?: NotificationStore;
+  /** generic access to the SQL rules functions (applications, admin, safety) */
+  rpc?: Rpc;
+  /** 32-byte key that encrypts payout details */
+  payoutKey?: Buffer;
 }
 
 export function createApp(config: Config, deps?: AppDeps): Express {
@@ -56,6 +64,13 @@ export function createApp(config: Config, deps?: AppDeps): Express {
     }
     if (deps.offers) {
       app.use('/api/offers', offersRouter(deps.offers, auth));
+    }
+    if (deps.rpc) {
+      app.use('/api/admin', adminRouter(deps.rpc, auth));
+      app.use('/api', safetyRouter(deps.rpc, auth));
+      if (deps.payoutKey) {
+        app.use('/api/applications', applicationsRouter({ rpc: deps.rpc, payoutKey: deps.payoutKey }, auth));
+      }
     }
   }
 
