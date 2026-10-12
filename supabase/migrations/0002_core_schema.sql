@@ -124,6 +124,7 @@ create table public.bookings (
   parts_amount           numeric(10, 2),
   final_price            numeric(10, 2),
   needs_price_approval   boolean not null default false,
+  frozen                 boolean not null default false,
   price_approved_at      timestamptz,
   search_radius_km       integer not null default 5,
   miss_count             integer not null default 0,

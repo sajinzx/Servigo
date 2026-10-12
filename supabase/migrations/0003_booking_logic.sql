@@ -39,6 +39,8 @@ insert into public.booking_transitions (from_status, to_status, actors) values
   ('reviewed',  'disputed',  '{customer,admin}'),
   ('disputed',  'paid',      '{admin}'),
   ('disputed',  'refunded',  '{admin}'),
+  ('disputed',  'completed', '{admin}'),
+  ('disputed',  'reviewed',  '{admin}'),
   ('completed', 'refunded',  '{admin}'),
   ('paid',      'refunded',  '{admin}'),
   ('reviewed',  'refunded',  '{admin}');
@@ -94,6 +96,11 @@ begin
    where from_status = b.status and to_status = p_to;
   if not found then
     raise exception 'illegal transition % -> %', b.status, p_to;
+  end if;
+
+  -- a frozen booking (safety or damage report) only moves by an admin decision
+  if b.frozen and p_actor_role <> 'admin' then
+    raise exception 'booking is frozen pending an admin review' using errcode = '42501';
   end if;
 
   if not (p_actor_role = any (allowed)) then

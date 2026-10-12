@@ -2,8 +2,8 @@
 -- the in-process test database skips *.postgis.sql files.
 --
 -- lat/lng stay the source of truth; geom is derived from them so the two can
--- never disagree. find_candidates() is redefined to use ST_DWithin on the GiST
--- indexes. Everything else about it is identical to 0006.
+-- never disagree. The ST_DWithin version of find_candidates() lives in the last
+-- migration (see supabase/tools/gen_postgis_find_candidates.py).
 
 create extension if not exists postgis;
 
@@ -20,76 +20,3 @@ alter table public.bookings
 create index workshops_geom_gix on public.workshops using gist (geom);
 create index addresses_geom_gix on public.addresses using gist (geom);
 create index bookings_pickup_geom_gix on public.bookings using gist (pickup_geom);
-
-create or replace function public.find_candidates(
-  p_booking   uuid,
-  p_radius_km numeric,
-  p_limit     integer default 20
-) returns table (
-  workshop_id       uuid,
-  name              text,
-  lat               double precision,
-  lng               double precision,
-  distance_km       double precision,
-  staff_count       integer,
-  active_jobs       integer,
-  rating_sum        integer,
-  rating_count      integer,
-  jobs_today        integer,
-  offers_30d        integer,
-  accepted_30d      integer,
-  price_override    numeric
-)
-language sql stable as $$
-  with b as (
-    select bk.id, bk.service_id, bk.mode, bk.pickup_lat, bk.pickup_lng, bk.pickup_geom,
-           coalesce(bk.scheduled_for, now()) as at_time,
-           vm.kind as vkind
-      from public.bookings bk
-      join public.vehicles v on v.id = bk.vehicle_id
-      join public.vehicle_models vm on vm.id = v.model_id
-     where bk.id = p_booking
-  ),
-  near as (
-    select w.*, st_distance(w.geom, b.pickup_geom) / 1000.0 as dist,
-           ws.price_override, b.mode, b.at_time
-      from public.workshops w
-      cross join b
-      join public.workshop_services ws
-        on ws.workshop_id = w.id and ws.service_id = b.service_id and not ws.is_paused
-     where w.is_active
-       and b.vkind = any (w.vehicle_kinds)
-       -- uses the GiST index on workshops.geom
-       and st_dwithin(w.geom, b.pickup_geom, p_radius_km * 1000.0)
-       and public.workshop_open_at(w.open_hours, b.at_time)
-       -- a shop that already turned this booking down (or let it expire) is not asked again
-       and not exists (select 1 from public.offers o where o.booking_id = p_booking and o.workshop_id = w.id)
-  ),
-  load as (
-    select n.id as wid,
-           coalesce((select count(*) from public.bookings x
-                      where x.workshop_id = n.id and x.status in ('accepted', 'in_progress')), 0)
-         + coalesce((select count(*) from public.offers o
-                      where o.workshop_id = n.id and o.response = 'pending'), 0) as active
-      from near n
-  )
-  select n.id, n.name, n.lat, n.lng, n.dist, n.staff_count,
-         l.active::integer,
-         n.rating_sum, n.rating_count,
-         (select count(*)::integer from public.offers o
-           where o.workshop_id = n.id and o.response = 'accepted'
-             and o.responded_at >= date_trunc('day', now() at time zone 'Asia/Kolkata') at time zone 'Asia/Kolkata'),
-         (select count(*)::integer from public.offers o
-           where o.workshop_id = n.id and o.offered_at >= now() - interval '30 days'),
-         (select count(*)::integer from public.offers o
-           where o.workshop_id = n.id and o.offered_at >= now() - interval '30 days'
-             and o.response = 'accepted'),
-         n.price_override
-    from near n
-    join load l on l.wid = n.id
-   where n.dist <= p_radius_km
-     and l.active < n.staff_count
-     and (n.mode = 'workshop' or (n.offers_doorstep and n.dist <= n.service_radius_km))
-   order by n.dist
-   limit p_limit
-$$;;
