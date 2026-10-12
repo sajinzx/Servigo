@@ -8,6 +8,8 @@ import { runForever } from './runner';
 import { Allocator } from '../allocation/allocator';
 import { allocationHandlers, scheduleBatchWindow, BATCH_WINDOW_SECONDS } from '../allocation/handlers';
 import { osrmEtaProvider } from '../domain/osrm';
+import { billingHandlers, type InvoiceStorage } from '../billing/handlers';
+import { createClient } from '@supabase/supabase-js';
 import { emailChannel, pushChannel, smsChannel, whatsappChannel } from './channels';
 import type { Channel, ChannelName } from './ports';
 
@@ -55,11 +57,35 @@ const allocator = new Allocator(pool, {
   }),
   log: (m, x) => console.warn(m, x ?? ''),
 });
+// invoice PDFs go to the private `invoices` bucket; without Supabase credentials they stay in the log
+const storage: InvoiceStorage =
+  env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY
+    ? (() => {
+        const sb = createClient(env.SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
+          auth: { persistSession: false },
+        });
+        return {
+          async put(path, bytes) {
+            const { error } = await sb.storage
+              .from('invoices')
+              .upload(path, bytes, { contentType: 'application/pdf', upsert: true });
+            if (error) throw new Error(`storage: ${error.message}`);
+            return path;
+          },
+        };
+      })()
+    : {
+        async put(path) {
+          console.warn(`SUPABASE_URL not set; invoice ${path} was rendered but not stored`);
+          return path;
+        },
+      };
+
 const handlers = buildHandlers({
   store,
   queue,
   notifier,
-  extra: allocationHandlers(pool, allocator),
+  extra: { ...allocationHandlers(pool, allocator), ...billingHandlers(pool, storage) },
 });
 
 // batch assignment window (idempotent per window, so several workers are fine)
