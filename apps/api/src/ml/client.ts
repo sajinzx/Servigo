@@ -123,6 +123,15 @@ export class MlClient {
     return this.call('/predict/service-due', { body: args });
   }
 
+  /** admin: registry summary with the promotion decision of each active version */
+  models(): Promise<{ models: unknown[] } | null> {
+    return this.call('/models');
+  }
+
+  rollback(name: string, version: string): Promise<{ name: string; active: string } | null> {
+    return this.call(`/models/${encodeURIComponent(name)}/rollback`, { body: { version } });
+  }
+
   async weights(): Promise<Record<string, number> | null> {
     const r = await this.call<{ weights: Record<string, number> }>('/allocation/weights');
     return r?.weights ?? null;

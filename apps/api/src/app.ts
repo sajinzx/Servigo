@@ -77,8 +77,8 @@ export function createApp(config: Config, deps?: AppDeps): Express {
       app.use('/api/offers', offersRouter(deps.offers, auth));
     }
     if (deps.rpc) {
-      app.use('/api/admin', adminRouter(deps.rpc, auth));
       app.use('/api/admin/finance', financeRouter(deps.rpc, auth));
+      app.use('/api/admin', adminRouter(deps.rpc, auth, deps.ml ?? null));
       app.use('/api', paymentsRouter({ rpc: deps.rpc, ...deps.payments }, auth));
       app.use('/api', safetyRouter(deps.rpc, auth));
       if (deps.payoutKey) {

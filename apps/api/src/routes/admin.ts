@@ -2,6 +2,8 @@ import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
 import { requireRole } from '../auth/middleware';
 import type { Rpc } from '../db/rpc';
+import { HttpError } from '../http/errors';
+import type { MlClient } from '../ml/client';
 
 const uuid = z.string().uuid();
 const idOf = (req: { params: Record<string, string | string[]> }) => uuid.parse(req.params.id);
@@ -22,7 +24,7 @@ const appealSchema = z
   .strict();
 
 /** Everything an admin does goes through here; each action is a SQL function that logs who and why. */
-export function adminRouter(rpc: Rpc, auth: RequestHandler): Router {
+export function adminRouter(rpc: Rpc, auth: RequestHandler, ml: MlClient | null = null): Router {
   const r = Router();
   r.use(auth, requireRole('admin'));
 
@@ -39,6 +41,26 @@ export function adminRouter(rpc: Rpc, auth: RequestHandler): Router {
   r.get('/review-queue', wrap(async (_req, res) => res.json(await rpc.many('admin_review_queue'))));
   r.get('/cases', wrap(async (_req, res) => res.json(await rpc.many('admin_open_cases'))));
   r.get('/dead-letters', wrap(async (_req, res) => res.json(await rpc.many('admin_dead_letters'))));
+
+  r.get(
+    '/models',
+    wrap(async (_req, res) => {
+      const m = ml ? await ml.models() : null;
+      if (!m) throw new HttpError(503, 'the ML service is not reachable', 'ml_unavailable');
+      res.json(m);
+    }),
+  );
+
+  r.post(
+    '/models/:name/rollback',
+    wrap(async (req, res) => {
+      const name = z.string().regex(/^[a-z_]{3,32}$/).parse(req.params.name);
+      const { version } = z.object({ version: z.string().regex(/^[0-9A-Za-z_.-]{1,40}$/) }).strict().parse(req.body);
+      const out = ml ? await ml.rollback(name, version) : null;
+      if (!out) throw new HttpError(503, 'the ML service is not reachable', 'ml_unavailable');
+      res.json(out);
+    }),
+  );
 
   r.post(
     '/dead-letters/:id/requeue',

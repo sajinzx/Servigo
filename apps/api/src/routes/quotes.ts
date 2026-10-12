@@ -5,6 +5,7 @@ import { keywordTriage } from '../domain/triageBaseline';
 import { notFound } from '../http/errors';
 import type { MlClient } from '../ml/client';
 import type { BookingStore } from './bookings';
+import { serviceDueBaseline } from '../domain/serviceDue';
 
 const quoteQuery = z.object({ vehicle_id: z.string().uuid(), service_id: z.string().uuid() });
 const triageBody = z
@@ -17,7 +18,7 @@ const triageBody = z
 
 /** What the booking screen shows before the customer confirms: suggested services, price range, time. */
 export function quotesRouter(
-  store: Pick<BookingStore, 'quoteContext'>,
+  store: Pick<BookingStore, 'quoteContext' | 'vehicleDue'>,
   quoter: Quoter,
   ml: MlClient | null,
   auth: RequestHandler,
@@ -36,6 +37,35 @@ export function quotesRouter(
         source: quote.source,
         why: quote.why ?? [],
       });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // "next service due in ~N days" on the garage card
+  r.get('/vehicles/:id/service-due', auth, async (req, res, next) => {
+    try {
+      const id = z.string().uuid().parse(req.params.id);
+      const f = await store.vehicleDue(id, req.user!.id);
+      if (!f) throw notFound('vehicle');
+      const fromModel = ml
+        ? await ml.serviceDue({
+            kind: f.kind,
+            age_years: f.ageYears,
+            km_per_day: f.kmPerDay,
+            days_since_service: f.daysSinceService,
+            within_days: 30,
+          })
+        : null;
+      if (fromModel && fromModel.model_version !== 'baseline') {
+        res.json({
+          days_left: fromModel.days_left,
+          probability_due: fromModel.probability_due,
+          source: 'ml',
+        });
+        return;
+      }
+      res.json({ ...serviceDueBaseline(f.kmPerDay, f.daysSinceService), source: 'baseline' });
     } catch (e) {
       next(e);
     }

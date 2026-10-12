@@ -24,6 +24,9 @@ function setup() {
     quote_low: 0, quote_high: 0, final_price: null, needs_price_approval: false, ...over,
   });
   const store: BookingStore = {
+    async vehicleDue() {
+      return null;
+    },
     async quoteContext() {
       return {
         serviceCode: 'CAR_001', segment: 'suv', basePrice: 2500, segmentFactor: 1.35,

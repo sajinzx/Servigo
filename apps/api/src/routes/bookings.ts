@@ -32,7 +32,16 @@ export interface CreateBookingArgs {
 
 export type { QuoteContext };
 
+export interface VehicleDueFeatures {
+  kind: 'car' | 'bike';
+  ageYears: number;
+  kmPerDay: number;
+  daysSinceService: number;
+}
+
 export interface BookingStore {
+  /** features for the next-service estimate; null when the vehicle is not this user's */
+  vehicleDue(vehicleId: string, userId: string): Promise<VehicleDueFeatures | null>;
   quoteContext(vehicleId: string, serviceId: string): Promise<QuoteContext | null>;
   addressPoint(userId: string, addressId: string): Promise<{ lat: number; lng: number } | null>;
   create(args: CreateBookingArgs): Promise<BookingRow>;

@@ -1,6 +1,6 @@
 import type { Db } from '../db/supabase';
 import { unwrap } from '../db/supabase';
-import type { BookingRow, BookingStore } from '../routes/bookings';
+import type { BookingRow, BookingStore, VehicleDueFeatures } from '../routes/bookings';
 import type { QuoteContext } from '../domain/quoter';
 
 /** supabase-js rpc wrapper: our SQL functions return a single booking row. */
@@ -55,6 +55,32 @@ export function supabaseBookings(db: Db): BookingStore {
         baseDurationMin: service.base_duration_min,
         vehicleAge: age,
         kmSinceService: Math.round(perDay * sinceService),
+      };
+    },
+
+    async vehicleDue(vehicleId, userId): Promise<VehicleDueFeatures | null> {
+      const res = await db
+        .from('vehicles')
+        .select('year, odometer_km, last_service_at, vehicle_models(kind)')
+        .eq('id', vehicleId)
+        .eq('owner_id', userId)
+        .maybeSingle();
+      const v = unwrap(res) as unknown as {
+        year: number;
+        odometer_km: number;
+        last_service_at: string | null;
+        vehicle_models: { kind: 'car' | 'bike' };
+      } | null;
+      if (!v) return null;
+      const now = new Date();
+      const age = Math.max(0, now.getFullYear() - v.year);
+      return {
+        kind: v.vehicle_models.kind,
+        ageYears: age,
+        kmPerDay: Math.max(v.odometer_km / Math.max(age * 365, 30), 1),
+        daysSinceService: v.last_service_at
+          ? Math.max(0, (now.getTime() - new Date(v.last_service_at).getTime()) / 86_400_000)
+          : age * 365,
       };
     },
 

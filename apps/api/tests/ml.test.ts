@@ -151,7 +151,11 @@ describe('quote and triage routes', () => {
   const S = '22222222-2222-4222-8222-222222222222';
 
   function appWith(ml: MlClient | undefined) {
-    const store = { quoteContext: async () => ctx } as unknown as BookingStore;
+    const store = {
+      quoteContext: async () => ctx,
+      vehicleDue: async (id: string) =>
+        id === V ? { kind: 'car', ageYears: 5, kmPerDay: 30, daysSinceService: 100 } : null,
+    } as unknown as BookingStore;
     return createApp(loadConfig({ NODE_ENV: 'test' }), {
       auth: { jwtSecret: SECRET, lookupRole: async (id) => roles[id] ?? null },
       profiles: { get: async () => null, update: async () => { throw new Error('unused'); } },
@@ -181,6 +185,20 @@ describe('quote and triage routes', () => {
     const b = await request(appWith(bad)).post('/api/triage').set(bearer).send({ text: 'ac not cooling', vehicle_kind: 'car' });
     expect(b.body.source).toBe('baseline');
     expect(b.body.suggestions[0].code).toBe('CAR_005');
+  });
+
+  it('estimates the next service from the fixed rule when ML is off', async () => {
+    // 30 km/day -> 5000 km in ~167 days; 100 days since the last service -> ~67 days left
+    const res = await request(appWith(undefined)).get(`/api/vehicles/${V}/service-due`).set(bearer);
+    expect(res.status).toBe(200);
+    expect(res.body.source).toBe('baseline');
+    expect(res.body.days_left).toBeCloseTo(66.7, 0);
+  });
+
+  it('does not reveal a vehicle that is not the caller's', async () => {
+    const other = '99999999-9999-4999-8999-999999999999';
+    const res = await request(appWith(undefined)).get(`/api/vehicles/${other}/service-due`).set(bearer);
+    expect(res.status).toBe(404);
   });
 
   it('needs sign-in', async () => {
