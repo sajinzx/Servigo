@@ -48,6 +48,11 @@ if (db) {
   console.warn('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set: only /health is available');
 }
 
-createApp(config, deps).listen(config.PORT, () => {
+const app = createApp(config, deps && db ? { ...deps, ping: async () => { const r = await db.from('profiles').select('id').limit(1); if (r.error) throw new Error(r.error.message); } } : deps);
+
+// one proxy hop (Render) so rate limits see the client's address
+app.set('trust proxy', 1);
+
+app.listen(config.PORT, () => {
   console.log(`servigo api listening on :${config.PORT}`);
 });

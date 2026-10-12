@@ -16,6 +16,7 @@ import { financeRouter } from './routes/finance';
 import { quotesRouter } from './routes/quotes';
 import { baselineQuoter, mlQuoter, type Quoter } from './domain/quoter';
 import type { MlClient } from './ml/client';
+import { accessLog, bookingCreateLimiter, globalLimiter, requestId, writeLimiter } from './http/hardening';
 import type { Rpc } from './db/rpc';
 import type { NotificationStore } from './worker/ports';
 
@@ -33,11 +34,19 @@ export interface AppDeps {
   payments?: Omit<PaymentsDeps, 'rpc'>;
   /** ML service client; absent or unreachable means every prediction uses its baseline */
   ml?: MlClient;
+  /** returns when the database answers; used by /ready */
+  ping?: () => Promise<void>;
+  /** set false in tests that hammer one route */
+  rateLimit?: boolean;
+  /** where access log lines go; defaults to stdout, silent under NODE_ENV=test */
+  log?: (line: string) => void;
 }
 
 export function createApp(config: Config, deps?: AppDeps): Express {
   const app = express();
   app.disable('x-powered-by');
+  app.use(requestId);
+  if (deps?.log || config.NODE_ENV !== 'test') app.use(accessLog(deps?.log));
   app.use(helmet());
   app.use(cors({ origin: config.CORS_ORIGINS.split(',').map((s) => s.trim()) }));
   // keep the raw body: webhook signatures are computed over the exact bytes
@@ -50,9 +59,22 @@ export function createApp(config: Config, deps?: AppDeps): Express {
     }),
   );
 
+  // liveness: the process is up. readiness: it can actually do work.
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', service: 'servigo-api' });
   });
+  app.get('/ready', async (_req, res) => {
+    try {
+      await deps?.ping?.();
+      res.json({ status: 'ready', database: deps?.ping ? 'ok' : 'not configured', ml: deps?.ml?.enabled ? 'configured' : 'off' });
+    } catch {
+      res.status(503).json({ status: 'unavailable', database: 'down' });
+    }
+  });
+
+  if (deps?.rateLimit !== false) {
+    app.use('/api', globalLimiter);
+  }
 
   if (deps?.notifications) {
     app.use(
@@ -70,10 +92,12 @@ export function createApp(config: Config, deps?: AppDeps): Express {
     app.use('/api/me', meRouter(deps.profiles, auth));
     const quoter: Quoter = deps.ml?.enabled ? mlQuoter(deps.ml) : baselineQuoter;
     if (deps.bookings) {
+      if (deps.rateLimit !== false) app.post('/api/bookings', bookingCreateLimiter);
       app.use('/api/bookings', bookingsRouter(deps.bookings, auth, quoter));
       app.use('/api', quotesRouter(deps.bookings, quoter, deps.ml ?? null, auth));
     }
     if (deps.offers) {
+      if (deps.rateLimit !== false) app.use('/api/offers', writeLimiter);
       app.use('/api/offers', offersRouter(deps.offers, auth));
     }
     if (deps.rpc) {
