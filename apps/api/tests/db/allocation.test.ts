@@ -80,8 +80,8 @@ async function world(): Promise<W> {
     await db.query(`update public.profiles set role = 'mechanic' where id = $1`, [owner]);
     const id = await one(
       `insert into public.workshops (owner_id, name, city, lat, lng, staff_count, open_hours, vehicle_kinds,
-                                     rating_sum, rating_count, offers_doorstep, service_radius_km)
-       values ($1,$2,'Chennai',$3,$4,$5,$6::jsonb,$7::public.vehicle_kind[],$8,$9,$10,$11) returning id`,
+                                     rating_sum, rating_count, offers_doorstep, service_radius_km, stage)
+       values ($1,$2,'Chennai',$3,$4,$5,$6::jsonb,$7::public.vehicle_kind[],$8,$9,$10,$11,'active') returning id`,
       [owner, name, lat, lng, staff, o.hours ?? ALWAYS_OPEN, o.kinds ?? '{car,bike}', o.ratingSum ?? 0,
        o.ratingCount ?? 0, o.doorstep ?? false, o.radius ?? 10],
     );

@@ -26,6 +26,22 @@ export function buildHandlers(deps: HandlerDeps): Handlers {
       }
     },
 
+    // trust & safety notices written by the SQL rules (suspension, acceptance warning)
+    'ts.notice': async (job) => {
+      const p = job.payload as { user_id: string; message: string };
+      // one message per channel: the notifier stops at the first channel that works
+      for (const channel of ['in_app', 'whatsapp'] as const) {
+        await notifier.deliver({
+          user_id: p.user_id,
+          template: 'ts_notice',
+          vars: { message: p.message },
+          channels: [channel],
+          live: false,
+          key: `ts:${job.idempotency_key}:${channel}`,
+        });
+      }
+    },
+
     'notify.send': async (job) => {
       await notifier.deliver(job.payload as unknown as NotifyPayload);
     },

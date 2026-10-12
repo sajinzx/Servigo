@@ -67,6 +67,12 @@ export const TEMPLATES = {
     title: 'Payment confirmed',
     body: 'Payment of {{price}} for booking {{ref}} is confirmed and will be in your next payout.',
   },
+  ts_notice: {
+    version: 1,
+    kind: 'transactional',
+    title: 'Account notice',
+    body: '{{message}}',
+  },
   service_due: {
     version: 1,
     kind: 'reminder',

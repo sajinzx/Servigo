@@ -37,6 +37,7 @@ interface CandidateRow {
   jobs_today: number;
   offers_30d: number;
   accepted_30d: number;
+  low_acceptance: boolean;
 }
 
 export interface AllocatorOptions {
@@ -100,6 +101,7 @@ export class Allocator {
       offers30d: c.offers_30d,
       accepted30d: c.accepted_30d,
       pAccept: ml?.[c.workshop_id],
+      lowAcceptance: c.low_acceptance,
     }));
     return scoreCandidates(cands, this.opts.score);
   }

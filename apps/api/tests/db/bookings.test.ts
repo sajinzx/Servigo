@@ -250,7 +250,7 @@ describe('transition table', () => {
       )
     ).rows;
     const legalSet = new Set(legal.map((l) => `${l.from_status}>${l.to_status}`));
-    expect(legal.length).toBe(26);
+    expect(legal.length).toBe(28);
 
     for (const from of STATUSES) {
       for (const to of STATUSES) {

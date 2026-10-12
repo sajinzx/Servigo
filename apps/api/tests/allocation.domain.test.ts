@@ -76,6 +76,15 @@ describe('scoring', () => {
     expect(ranked[0].candidate.workshopId).toBe('idle');
   });
 
+  it('ranks a low-acceptance workshop below an otherwise identical one', () => {
+    const ranked = scoreCandidates([
+      { ...base, workshopId: 'flagged', lowAcceptance: true },
+      { ...base, workshopId: 'fine' },
+    ]);
+    expect(ranked[0].candidate.workshopId).toBe('fine');
+    expect(ranked[1].score).toBeLessThan(ranked[0].score);
+  });
+
   it('keeps every score within 0..1', () => {
     const ranked = scoreCandidates([
       { ...base, workshopId: 'x', etaMin: 5, ratingSum: 100, ratingCount: 20, accepted30d: 20, offers30d: 20 },
