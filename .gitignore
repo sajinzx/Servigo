@@ -19,3 +19,4 @@ data/raw/
 data/generated/
 services/ml/artifacts/
 deploy-env/
+/dist/
