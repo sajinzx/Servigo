@@ -8,7 +8,7 @@ services:
     runtime: node
     plan: free
     rootDir: .
-    buildCommand: npm ci && npm run build -w apps/api
+    buildCommand: npm ci --include=dev && npm run build -w apps/api
     startCommand: node apps/api/dist/server.js
     healthCheckPath: /ready
     envVars:
@@ -36,7 +36,7 @@ services:
     runtime: node
     plan: starter # a free web service sleeps; the queue worker must not
     rootDir: .
-    buildCommand: npm ci && npm run build -w apps/api
+    buildCommand: npm ci --include=dev && npm run build -w apps/api
     startCommand: node apps/api/dist/worker/main.js
     envVars:
       - { key: NODE_VERSION, value: "20" }
