@@ -24,6 +24,27 @@ function loadPayoutKey(raw: string | undefined): Buffer | undefined {
 }
 
 const config = loadConfig();
+
+/** Say what shape each connection setting has, so a bad paste is obvious in the log. No secrets. */
+function describeConfig() {
+  const host = (raw?: string) => {
+    if (!raw) return 'NOT SET';
+    try {
+      const u = new URL(raw);
+      return `${u.protocol}//${u.hostname}${u.port ? ':' + u.port : ''}`;
+    } catch {
+      return `NOT A VALID URL (starts with "${raw.slice(0, 12).replace(/[:@/].*/, '')}…", ${raw.length} chars)`;
+    }
+  };
+  const key = (k?: string) =>
+    !k ? 'NOT SET' : k.startsWith('sb_secret_') ? 'sb_secret key' : k.startsWith('eyJ') ? 'legacy jwt key' : `unrecognised (${k.length} chars)`;
+  console.log(
+    `config: supabase=${host(config.SUPABASE_URL)} key=${key(config.SUPABASE_SERVICE_ROLE_KEY)} ` +
+      `jwks=${host(config.SUPABASE_JWKS_URL)} database=${host(process.env.DATABASE_URL)} ` +
+      `worker=${process.env.RUN_WORKER === 'true'} ml=${config.ML_SERVICE_URL ? 'configured' : 'off'}`,
+  );
+}
+describeConfig();
 const db = createAdminClient(config);
 
 let deps: AppDeps | undefined;
@@ -64,7 +85,13 @@ if (db) {
   console.warn('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set: only /health is available');
 }
 
-const app = createApp(config, deps && db ? { ...deps, ping: async () => { const r = await db.from('profiles').select('id').limit(1); if (r.error) throw new Error(r.error.message); } } : deps);
+const app = createApp(config, deps && db ? { ...deps, ping: async () => {
+          const r = await db.from('profiles').select('id').limit(1);
+          if (r.error) {
+            console.error(`readiness: supabase query failed: ${r.error.message}`);
+            throw new Error(r.error.message);
+          }
+        } } : deps);
 
 // one proxy hop (Render) so rate limits see the client's address
 app.set('trust proxy', 1);

@@ -22,6 +22,14 @@ if (!env.DATABASE_URL) {
   process.exit(1);
 }
 
+try {
+  const u = new URL(env.DATABASE_URL);
+  console.log(`worker database: ${u.hostname}:${u.port || '5432'} as ${decodeURIComponent(u.username)}`);
+} catch {
+  console.error('DATABASE_URL is not a valid URL. Expected postgresql://USER:PASSWORD@HOST:5432/postgres (encode @ in the password as %40)');
+  process.exit(1);
+}
+
 const pool = new Pool({ connectionString: env.DATABASE_URL, max: 5 });
 const queue = pgQueue(pool);
 const store = pgNotificationStore(pool);
