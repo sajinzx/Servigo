@@ -80,7 +80,7 @@ moves to the next channel, no Razorpay keys means the card option reports that i
 
 ## Deploy
 
-- Web: Vercel, using `apps/web/vercel.json`.
+- Web: Vercel with Root Directory `apps/web` (settings in `apps/web/vercel.json`).
 - API, worker, ML service: Render, using `render.yaml`. The worker needs a plan that does not sleep.
 - Database: Supabase. Run the restore drill (`scripts/restore-drill.sh`) before the pilot.
 - GitHub Actions: `ci.yml` on every push, `nightly.yml` retrains and refreshes the forecast, `uptime.yml`
