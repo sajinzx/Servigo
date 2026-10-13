@@ -60,4 +60,14 @@ app.set('trust proxy', 1);
 
 app.listen(config.PORT, () => {
   console.log(`servigo api listening on :${config.PORT}`);
+
+  // Single-service hosting: run the queue worker inside this process. Jobs are durable, so if the
+  // host sleeps the queue simply resumes on wake. Prefer a separate worker service when you can.
+  if (process.env.RUN_WORKER === 'true') {
+    if (!process.env.DATABASE_URL) {
+      console.warn('RUN_WORKER=true but DATABASE_URL is not set; the worker was not started');
+    } else {
+      import('./worker/main').catch((e) => console.error('worker failed to start', e));
+    }
+  }
 });
