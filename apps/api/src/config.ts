@@ -7,6 +7,8 @@ const schema = z.object({
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   SUPABASE_JWT_SECRET: z.string().min(16).optional(),
+  /** https://<ref>.supabase.co/auth/v1/.well-known/jwks.json */
+  SUPABASE_JWKS_URL: z.string().url().optional(),
   ML_SERVICE_URL: z.string().url().optional(),
   ML_API_KEY: z.string().optional(),
   OSRM_URL: z.string().url().default('https://router.project-osrm.org'),

@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { createRemoteJWKSet } from 'jose';
 import { createApp, type AppDeps } from './app';
 import { loadConfig } from './config';
 import { createAdminClient } from './db/supabase';
@@ -18,7 +19,11 @@ let deps: AppDeps | undefined;
 if (db) {
   const profiles = supabaseProfiles(db);
   deps = {
-    auth: { jwtSecret: config.SUPABASE_JWT_SECRET, lookupRole: (id) => profiles.roleOf(id) },
+    auth: {
+      jwtSecret: config.SUPABASE_JWT_SECRET,
+      jwks: config.SUPABASE_JWKS_URL ? createRemoteJWKSet(new URL(config.SUPABASE_JWKS_URL)) : undefined,
+      lookupRole: (id) => profiles.roleOf(id),
+    },
     profiles,
     bookings: supabaseBookings(db),
     offers: supabaseOffers(db),

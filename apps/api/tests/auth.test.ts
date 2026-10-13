@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { authenticate, requireRole } from '../src/auth/middleware';
 import { errorHandler } from '../src/http/errors';
+import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type KeyLike } from 'jose';
 import type { Role } from '../src/auth/types';
 
 const SECRET = 'test-secret-that-is-long-enough';
@@ -78,5 +79,52 @@ describe('requireRole', () => {
       .get('/admin/stats')
       .set('Authorization', `Bearer ${token('adm')}`);
     expect(res.status).toBe(200);
+  });
+});
+
+describe('asymmetric (JWKS) tokens', () => {
+  async function setup() {
+    const good = await generateKeyPair('ES256');
+    const other = await generateKeyPair('ES256');
+    const jwk = { ...(await exportJWK(good.publicKey)), kid: 'k1', alg: 'ES256', use: 'sig' };
+    const jwks = createLocalJWKSet({ keys: [jwk] });
+    const app = express();
+    const auth = authenticate({ jwks, lookupRole: async (id) => roles[id] ?? null });
+    app.get('/me', auth, (req, res) => res.json(req.user));
+    app.use(errorHandler);
+    const sign = (key: KeyLike, sub: string, exp = '1h', kid = 'k1') =>
+      new SignJWT({ role: 'authenticated' })
+        .setProtectedHeader({ alg: 'ES256', kid })
+        .setSubject(sub)
+        .setAudience('authenticated')
+        .setExpirationTime(exp)
+        .sign(key);
+    return { app, sign, good: good.privateKey, other: other.privateKey };
+  }
+
+  it('accepts a token signed by a key in the set', async () => {
+    const { app, sign, good } = await setup();
+    const res = await request(app).get('/me').set('Authorization', `Bearer ${await sign(good, 'cust')}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ id: 'cust', role: 'customer' });
+  });
+
+  it('rejects a token signed by some other key', async () => {
+    const { app, sign, other } = await setup();
+    const res = await request(app).get('/me').set('Authorization', `Bearer ${await sign(other, 'adm')}`);
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects an expired token', async () => {
+    const { app, sign, good } = await setup();
+    const res = await request(app).get('/me').set('Authorization', `Bearer ${await sign(good, 'cust', '-1m')}`);
+    expect(res.status).toBe(401);
+  });
+
+  it('does not accept an HS256 token when only a key set is configured', async () => {
+    const { app } = await setup();
+    const forged = jwt.sign({ sub: 'adm', aud: 'authenticated' }, 'x'.repeat(32), { algorithm: 'HS256' });
+    const res = await request(app).get('/me').set('Authorization', `Bearer ${forged}`);
+    expect(res.status).toBe(401);
   });
 });
