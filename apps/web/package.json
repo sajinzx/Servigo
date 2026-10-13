@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint src tests --max-warnings 0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postbuild": "node -e \"try{require('fs').cpSync('dist','../../dist',{recursive:true,force:true});console.log('copied bundle to repo-root dist')}catch(e){console.log('no repo-root copy:',e.message)}\""
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.2",
