@@ -9,7 +9,7 @@ services:
     startCommand: node apps/api/dist/server.js
     healthCheckPath: /ready
     envVars:
-      - { key: NODE_VERSION, value: "20" }
+      - { key: NODE_VERSION, value: "22" }
       - { key: NODE_ENV, value: production }
       - { key: RUN_WORKER, value: "true" }
       - { key: CORS_ORIGINS, sync: false }
