@@ -1,4 +1,6 @@
 @import './tokens.css';
+/* maplibre's own stylesheet; @import rules must come before everything else */
+@import 'maplibre-gl/dist/maplibre-gl.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -53,6 +55,3 @@
     @apply py-16 sm:py-24;
   }
 }
-
-/* maplibre needs its own stylesheet; imported here so one import covers every screen with a map */
-@import 'maplibre-gl/dist/maplibre-gl.css';
