@@ -1,0 +1,47 @@
+/*
+ * ServiGo design tokens. The feel is monochrome and editorial: ink on paper,
+ * hairline dividers, one accent colour per screen, status colours only on
+ * booking status chips. Dark mode is a theme, not a patch.
+ */
+:root {
+  --ink: #0a0a0a;
+  --paper: #ffffff;
+  --paper-2: #f5f5f3;
+  --line: #e2e2df;
+  --muted: #6b6b6b;
+  --accent: #0a6cff;
+  --ok: #2f6b4f;
+  --warn: #9a6a12;
+  --crit: #a12b2b;
+
+  --radius: 2px;
+  --space: 8px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 240ms;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --ink: #f5f5f3;
+  --paper: #0a0a0a;
+  --paper-2: #141414;
+  --line: #2a2a2a;
+  --muted: #9a9a96;
+  --accent: #4d94ff;
+  --ok: #6fbf97;
+  --warn: #d6a64a;
+  --crit: #e07a7a;
+
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur: 0ms;
+  }
+  * {
+    animation-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

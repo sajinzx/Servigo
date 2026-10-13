@@ -1,0 +1,18 @@
+name: uptime
+
+# Free-tier hosts sleep when idle. This pings the API and the ML service every 10 minutes
+# so the first customer request is not the one that wakes them, and fails loudly if either is down.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: api readiness
+        run: curl --fail --silent --show-error --max-time 60 "${{ vars.API_URL }}/ready"
+      - name: ml health
+        run: curl --fail --silent --show-error --max-time 60 "${{ vars.ML_URL }}/health"

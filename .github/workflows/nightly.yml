@@ -1,0 +1,38 @@
+name: nightly
+
+# Retrain from the latest data, refresh the 7 day demand forecast, run the drift check.
+# A new model version is promoted only if it beats its baseline and the active version
+# on the latest time-ordered split (services/ml/app/registry.py).
+
+on:
+  schedule:
+    - cron: '30 20 * * *' # 02:00 IST
+  workflow_dispatch:
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: services/ml/requirements.txt
+      - run: pip install -r services/ml/requirements.txt
+      - name: export the last 12 months from the database
+        run: python services/ml/app/jobs/export_data.py --out data/export
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: train, forecast, drift
+        working-directory: services/ml
+        run: python -m app.jobs.nightly --data ../../data/export --out artifacts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: model-artifacts-and-cards
+          path: |
+            services/ml/artifacts
+            services/ml/model_cards

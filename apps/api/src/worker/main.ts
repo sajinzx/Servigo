@@ -1,0 +1,127 @@
+import 'dotenv/config';
+import { Pool } from 'pg';
+import { buildHandlers } from './handlers';
+import { Notifier } from './notifier';
+import { pgNotificationStore } from './pgNotifications';
+import { pgQueue } from './pgQueue';
+import { runForever } from './runner';
+import { Allocator } from '../allocation/allocator';
+import { allocationHandlers, scheduleBatchWindow, BATCH_WINDOW_SECONDS } from '../allocation/handlers';
+import { osrmEtaProvider } from '../domain/osrm';
+import { billingHandlers, type InvoiceStorage } from '../billing/handlers';
+import { createClient } from '@supabase/supabase-js';
+import { MlClient } from '../ml/client';
+import { reminderHandlers } from './reminders';
+import type { Weights } from '../domain/scoring';
+import { emailChannel, pushChannel, smsChannel, whatsappChannel } from './channels';
+import type { Channel, ChannelName } from './ports';
+
+const env = process.env;
+if (!env.DATABASE_URL) {
+  console.error('DATABASE_URL is required for the worker');
+  process.exit(1);
+}
+
+const pool = new Pool({ connectionString: env.DATABASE_URL, max: 5 });
+const queue = pgQueue(pool);
+const store = pgNotificationStore(pool);
+
+// providers are optional: a channel with no credentials simply is not offered,
+// and the fallback chain moves on to the next one
+const channels: Partial<Record<ChannelName, Channel>> = {};
+if (env.WHATSAPP_PHONE_NUMBER_ID && env.WHATSAPP_ACCESS_TOKEN) {
+  channels.whatsapp = whatsappChannel({
+    phoneNumberId: env.WHATSAPP_PHONE_NUMBER_ID,
+    accessToken: env.WHATSAPP_ACCESS_TOKEN,
+  });
+}
+if (env.MSG91_AUTH_KEY) {
+  channels.sms = smsChannel({
+    authKey: env.MSG91_AUTH_KEY,
+    templateIds: JSON.parse(env.MSG91_TEMPLATE_IDS ?? '{}'),
+  });
+}
+if (env.RESEND_API_KEY && env.EMAIL_FROM) {
+  channels.email = emailChannel({ apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM });
+}
+if (env.FCM_PROJECT_ID && env.FCM_CLIENT_EMAIL && env.FCM_PRIVATE_KEY) {
+  channels.push = pushChannel({
+    projectId: env.FCM_PROJECT_ID,
+    clientEmail: env.FCM_CLIENT_EMAIL,
+    privateKey: env.FCM_PRIVATE_KEY,
+  });
+}
+
+const notifier = new Notifier({ store, queue, channels });
+const ml = new MlClient({
+  baseUrl: env.ML_SERVICE_URL,
+  apiKey: env.ML_API_KEY,
+  onFallback: (path, why) => console.warn(`ml ${path} fell back: ${why}`),
+});
+
+const allocator = new Allocator(pool, {
+  acceptModel: (offers) => ml.acceptance(offers),
+  weights: async () => {
+    const w = await ml.weights();
+    return w && 'eta' in w ? (w as unknown as Weights) : null;
+  },
+  eta: osrmEtaProvider({
+    baseUrl: env.OSRM_URL ?? 'https://router.project-osrm.org',
+    onFallback: (reason) => console.warn('osrm fallback:', reason),
+  }),
+  log: (m, x) => console.warn(m, x ?? ''),
+});
+// invoice PDFs go to the private `invoices` bucket; without Supabase credentials they stay in the log
+const storage: InvoiceStorage =
+  env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY
+    ? (() => {
+        const sb = createClient(env.SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
+          auth: { persistSession: false },
+        });
+        return {
+          async put(path, bytes) {
+            const { error } = await sb.storage
+              .from('invoices')
+              .upload(path, bytes, { contentType: 'application/pdf', upsert: true });
+            if (error) throw new Error(`storage: ${error.message}`);
+            return path;
+          },
+        };
+      })()
+    : {
+        async put(path) {
+          console.warn(`SUPABASE_URL not set; invoice ${path} was rendered but not stored`);
+          return path;
+        },
+      };
+
+const handlers = buildHandlers({
+  store,
+  queue,
+  notifier,
+  extra: {
+    ...allocationHandlers(pool, allocator),
+    ...billingHandlers(pool, storage),
+    ...reminderHandlers(pool, ml, queue),
+  },
+});
+
+// batch assignment window (idempotent per window, so several workers are fine)
+const batchTimer = setInterval(
+  () => scheduleBatchWindow(queue).catch((e) => console.error('batch schedule failed', e)),
+  BATCH_WINDOW_SECONDS * 1000,
+);
+
+const abort = new AbortController();
+process.on('SIGTERM', () => abort.abort());
+process.on('SIGINT', () => abort.abort());
+
+console.log(`worker started; channels: ${Object.keys(channels).join(', ') || 'in-app only'}`);
+runForever(queue, handlers, {
+  queues: ['realtime', 'notify', 'billing', 'batch'],
+  log: (m, x) => console.error(m, x ?? ''),
+  signal: abort.signal,
+}).then(() => {
+  clearInterval(batchTimer);
+  return pool.end();
+});
