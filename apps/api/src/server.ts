@@ -12,6 +12,17 @@ import { MlClient } from './ml/client';
 import { Pool } from 'pg';
 import { pgNotificationStore } from './worker/pgNotifications';
 
+/** A missing or malformed key disables workshop applications; it must not stop the whole API. */
+function loadPayoutKey(raw: string | undefined): Buffer | undefined {
+  if (!raw) return undefined;
+  try {
+    return parseKey(raw.trim());
+  } catch (e) {
+    console.error(`PAYOUT_ENCRYPTION_KEY is invalid (${(e as Error).message}); workshop applications are disabled`);
+    return undefined;
+  }
+}
+
 const config = loadConfig();
 const db = createAdminClient(config);
 
@@ -33,7 +44,7 @@ if (db) {
       onFallback: (path, why) => console.warn(`ml ${path} fell back: ${why}`),
     }),
     rpc: supabaseRpc(db),
-    payoutKey: config.PAYOUT_ENCRYPTION_KEY ? parseKey(config.PAYOUT_ENCRYPTION_KEY) : undefined,
+    payoutKey: loadPayoutKey(config.PAYOUT_ENCRYPTION_KEY),
     payments: {
       payee: config.UPI_PAYEE_ID ? { vpa: config.UPI_PAYEE_ID, name: config.UPI_PAYEE_NAME } : undefined,
       razorpay:
