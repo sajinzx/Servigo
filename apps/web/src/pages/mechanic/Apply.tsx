@@ -130,7 +130,7 @@ function ApplyForm({ existing, onChanged }: { existing: Application | null; onCh
       if (!appId || !session) return;
       if (file.size > 8 * 1024 * 1024) throw new Error('Please use a file under 8 MB');
       const path = `${session.user.id}/${appId}/${key}-${Date.now()}-${file.name.replace(/[^\w.-]/g, '_')}`;
-      const { error } = await requireSupabase().storage.from('workshop-docs').upload(path, file, { upsert: true });
+      const { error } = await requireSupabase().storage.from('workshop-docs').upload(path, file); // unique path per upload, so no upsert (which needs a SELECT policy)
       if (error) throw new Error(error.message);
       await api(`/api/applications/${appId}/documents`, { body: { kind: key, storage_path: path } });
       setFiles((f) => ({ ...f, [key]: file.name }));
