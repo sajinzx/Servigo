@@ -2,7 +2,7 @@ import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
 import type { Quoter } from '../domain/quoter';
 import { keywordTriage } from '../domain/triageBaseline';
-import { notFound } from '../http/errors';
+import { HttpError, notFound } from '../http/errors';
 import type { MlClient } from '../ml/client';
 import type { BookingStore } from './bookings';
 import { serviceDueBaseline } from '../domain/serviceDue';
@@ -13,6 +13,36 @@ const triageBody = z
     text: z.string().trim().min(2).max(1000),
     vehicle_kind: z.enum(['car', 'bike']),
     k: z.number().int().min(1).max(5).default(3),
+  })
+  .strict();
+
+const stop = z
+  .object({
+    name: z.string().trim().min(1).max(80),
+    lat: z.number().min(-90).max(90),
+    lng: z.number().min(-180).max(180),
+    dwell_min: z.number().min(0).max(600).optional(),
+  })
+  .strict();
+const tripBody = z
+  .object({
+    start: stop,
+    stops: z.array(stop).min(1).max(25),
+    end: stop.optional(),
+    optimise: z.boolean().optional(),
+    mileage_kmpl: z.number().gt(0).max(80).optional(),
+    fuel_price: z.number().gt(0).max(500).optional(),
+    vehicle: z
+      .object({
+        kind: z.enum(['car', 'bike']),
+        segment: z.string().max(30).optional(),
+        age_years: z.number().min(0).max(40).optional(),
+        odometer_km: z.number().min(0).optional(),
+        km_per_day: z.number().gt(0).max(1000).optional(),
+        days_since_service: z.number().min(0).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -66,6 +96,40 @@ export function quotesRouter(
         return;
       }
       res.json({ ...serviceDueBaseline(f.kmPerDay, f.daysSinceService), source: 'baseline' });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // health score, parts that need attention and what they will cost; needs the ML service
+  r.get('/vehicles/:id/intelligence', auth, async (req, res, next) => {
+    try {
+      const id = z.string().uuid().parse(req.params.id);
+      const f = await store.vehicleDue(id, req.user!.id);
+      if (!f) throw notFound('vehicle');
+      const out = ml
+        ? await ml.vehicleIntelligence({
+            kind: f.kind,
+            segment: f.segment ?? (f.kind === 'bike' ? 'commuter' : 'hatchback'),
+            age_years: f.ageYears,
+            odometer_km: f.odometerKm ?? 0,
+            km_per_day: f.kmPerDay,
+            days_since_service: f.daysSinceService,
+          })
+        : null;
+      if (!out) throw new HttpError(503, 'Vehicle intelligence is not available right now', 'ml_unavailable');
+      res.json(out);
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  r.post('/trip/plan', auth, async (req, res, next) => {
+    try {
+      const b = tripBody.parse(req.body);
+      const out = ml ? await ml.tripPlan(b) : null;
+      if (!out) throw new HttpError(503, 'Trip planning is not available right now', 'ml_unavailable');
+      res.json(out);
     } catch (e) {
       next(e);
     }

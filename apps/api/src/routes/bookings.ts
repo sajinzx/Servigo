@@ -37,6 +37,8 @@ export interface VehicleDueFeatures {
   ageYears: number;
   kmPerDay: number;
   daysSinceService: number;
+  segment?: string;
+  odometerKm?: number;
 }
 
 export interface BookingStore {

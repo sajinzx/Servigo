@@ -201,6 +201,38 @@ describe('quote and triage routes', () => {
     expect(res.status).toBe(404);
   });
 
+  it('serves vehicle intelligence from the ML service and says so plainly when it is off', async () => {
+    let sent: Record<string, unknown> = {};
+    const up = new MlClient({
+      baseUrl: 'http://ml',
+      fetchImpl: (async (_u: string, init: { body: string }) => {
+        sent = JSON.parse(init.body);
+        return json({ health: { score: 80, grade: 'good', attention: [], components: [] }, actions: [], cost: {}, sources: [] });
+      }) as unknown as typeof fetch,
+    });
+    const ok = await request(appWith(up)).get(`/api/vehicles/${V}/intelligence`).set(bearer);
+    expect(ok.status).toBe(200);
+    expect(ok.body.health.score).toBe(80);
+    expect(sent.kind).toBeDefined();
+
+    const off = await request(appWith(undefined)).get(`/api/vehicles/${V}/intelligence`).set(bearer);
+    expect(off.status).toBe(503);
+    expect(off.body.error).toBe('ml_unavailable');
+  });
+
+  it('plans a trip, and rejects stray fields and too many stops', async () => {
+    const up = new MlClient({
+      baseUrl: 'http://ml',
+      fetchImpl: (async () => json({ order: ['a'], distance_km: 3 })) as unknown as typeof fetch,
+    });
+    const p = { name: 'A', lat: 13, lng: 80 };
+    const ok = await request(appWith(up)).post('/api/trip/plan').set(bearer).send({ start: p, stops: [p] });
+    expect(ok.status).toBe(200);
+    await request(appWith(up)).post('/api/trip/plan').set(bearer).send({ start: p, stops: [p], evil: 1 }).expect(400);
+    await request(appWith(up)).post('/api/trip/plan').set(bearer).send({ start: p, stops: Array(26).fill(p) }).expect(400);
+    await request(appWith(undefined)).post('/api/trip/plan').set(bearer).send({ start: p, stops: [p] }).expect(503);
+  });
+
   it('needs sign-in', async () => {
     await request(appWith(undefined)).post('/api/triage').send({ text: 'x', vehicle_kind: 'car' }).expect(401);
   });

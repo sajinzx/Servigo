@@ -61,7 +61,7 @@ export function supabaseBookings(db: Db): BookingStore {
     async vehicleDue(vehicleId, userId): Promise<VehicleDueFeatures | null> {
       const res = await db
         .from('vehicles')
-        .select('year, odometer_km, last_service_at, vehicle_models(kind)')
+        .select('year, odometer_km, last_service_at, vehicle_models(kind, segment)')
         .eq('id', vehicleId)
         .eq('owner_id', userId)
         .maybeSingle();
@@ -69,13 +69,15 @@ export function supabaseBookings(db: Db): BookingStore {
         year: number;
         odometer_km: number;
         last_service_at: string | null;
-        vehicle_models: { kind: 'car' | 'bike' };
+        vehicle_models: { kind: 'car' | 'bike'; segment: string };
       } | null;
       if (!v) return null;
       const now = new Date();
       const age = Math.max(0, now.getFullYear() - v.year);
       return {
         kind: v.vehicle_models.kind,
+        segment: v.vehicle_models.segment,
+        odometerKm: v.odometer_km,
         ageYears: age,
         kmPerDay: Math.max(v.odometer_km / Math.max(age * 365, 30), 1),
         daysSinceService: v.last_service_at

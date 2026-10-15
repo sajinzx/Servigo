@@ -59,6 +59,59 @@ export interface ServiceDuePrediction {
   model_version: string;
 }
 
+export interface VehicleIntelligence {
+  health: {
+    score: number;
+    grade: string;
+    confidence?: string;
+    attention: string[];
+    components: {
+      key: string;
+      label: string;
+      service_code: string;
+      status: 'ok' | 'watch' | 'due' | 'overdue';
+      score: number;
+      wear: number;
+      since_days: number;
+      since_km: number;
+      interval_km: number | null;
+      interval_days: number | null;
+      days_left: number;
+      basis: string;
+    }[];
+  };
+  actions: { service_code: string; label: string; urgency: string; why: string }[];
+  cost: {
+    now: { low: number; median: number; high: number; items: unknown[] };
+    next_12_months: { low: number; median: number; high: number; items: unknown[]; horizon_days: number };
+  };
+  service_due_probability_30d: number | null;
+  learned_interval_days: number | null;
+  sources: string[];
+}
+
+export interface TripStop {
+  name: string;
+  lat: number;
+  lng: number;
+  dwell_min?: number;
+}
+
+export interface TripPlan {
+  order: string[];
+  legs: { from: string; to: string; km: number; minutes: number }[];
+  distance_km: number;
+  drive_minutes: number;
+  dwell_minutes: number;
+  total_minutes: number;
+  fuel_litres: number;
+  fuel_cost: number;
+  saved_km: number;
+  fit_for_trip: boolean;
+  risks: { label: string; service_code: string; level: string; note: string }[];
+  assumptions: Record<string, unknown>;
+}
+
 export class MlClient {
   constructor(private o: MlOptions) {}
 
@@ -66,11 +119,14 @@ export class MlClient {
     return !!this.o.baseUrl;
   }
 
-  private async call<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T | null> {
+  private async call<T>(
+    path: string,
+    init?: { method?: string; body?: unknown; timeoutMs?: number },
+  ): Promise<T | null> {
     if (!this.o.baseUrl) return null;
     const f = this.o.fetchImpl ?? fetch;
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), this.o.timeoutMs ?? 300);
+    const timer = setTimeout(() => ctl.abort(), init?.timeoutMs ?? this.o.timeoutMs ?? 300);
     try {
       const res = await f(`${this.o.baseUrl}${path}`, {
         method: init?.method ?? (init?.body ? 'POST' : 'GET'),
@@ -121,6 +177,30 @@ export class MlClient {
     within_days?: number;
   }): Promise<ServiceDuePrediction | null> {
     return this.call('/predict/service-due', { body: args });
+  }
+
+  /** Slower than the booking-path calls: the customer asked for this page and a cold service may take seconds. */
+  vehicleIntelligence(args: {
+    kind: 'car' | 'bike';
+    segment: string;
+    age_years: number;
+    odometer_km: number;
+    km_per_day: number;
+    days_since_service: number;
+  }): Promise<VehicleIntelligence | null> {
+    return this.call('/vehicle/intelligence', { body: args, timeoutMs: 8000 });
+  }
+
+  tripPlan(body: {
+    start: TripStop;
+    stops: TripStop[];
+    end?: TripStop;
+    optimise?: boolean;
+    mileage_kmpl?: number;
+    fuel_price?: number;
+    vehicle?: unknown;
+  }): Promise<TripPlan | null> {
+    return this.call('/trip/plan', { body, timeoutMs: 8000 });
   }
 
   /** admin: registry summary with the promotion decision of each active version */
