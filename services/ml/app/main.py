@@ -21,6 +21,8 @@ from scipy.optimize import linear_sum_assignment
 
 from . import baselines, catalogue
 from .features import with_catalogue
+from .intelligence import health as health_engine
+from .intelligence import trip as trip_engine
 from .registry import Registry
 
 ARTIFACT_DIR = Path(os.environ.get("ARTIFACT_DIR", "artifacts"))
@@ -238,6 +240,95 @@ def predict_service_due(body: ServiceDueIn) -> dict:
         "model_version": state.version("service_due"),
     }
     state.log("service_due", body.model_dump(), out, t0)
+    return out
+
+
+# ---- vehicle intelligence / trip planning --------------------------------------
+
+class VehicleIn(BaseModel):
+    kind: str = Field(pattern="^(car|bike)$")
+    segment: str = "hatchback"
+    age_years: float = Field(default=5.0, ge=0, le=40)
+    odometer_km: float = Field(default=0.0, ge=0)
+    km_per_day: float = Field(default=25.0, gt=0, le=1000)
+    days_since_service: float | None = Field(default=None, ge=0)
+    history_days_ago: dict[str, float] | None = None
+
+
+def _vehicle(b: VehicleIn) -> health_engine.VehicleProfile:
+    return health_engine.VehicleProfile(**b.model_dump())
+
+
+def _learned_interval(b: VehicleIn) -> tuple[float | None, float | None, list[str]]:
+    """(median interval days, P(due in 30d), sources) from M6 if it is promoted."""
+    if "service_due" not in state.models:
+        return None, None, []
+    m = state.models["service_due"][1]
+    df = pd.DataFrame({"km_per_day": [b.km_per_day], "age_years": [b.age_years],
+                       "is_car": [1 if b.kind == "car" else 0]})
+    median = float(m.median_days(df)[0])
+    p = None
+    if b.days_since_service is not None:
+        p = round(float(m.prob_due(df, np.array([b.days_since_service]), 30.0)[0]), 4)
+    return median, p, ["service_due"]
+
+
+def _price_fn(b: VehicleIn):
+    if "price" not in state.models:
+        return health_engine.catalogue_price_fn(b.segment), []
+    m = state.models["price"][1]
+
+    def f(code: str) -> tuple[float, float, float]:
+        job = JobIn(service_code=code, segment=b.segment, vehicle_age=b.age_years)
+        p = m.predict_price(_job_frame(job))
+        return (round(float(p["low"][0]), 2), round(float(p["median"][0]), 2), round(float(p["high"][0]), 2))
+
+    return f, ["price"]
+
+
+@app.post("/vehicle/intelligence", dependencies=[Depends(require_key)])
+def vehicle_intelligence(body: VehicleIn) -> dict:
+    t0 = time.perf_counter()
+    interval, p30, src = _learned_interval(body)
+    price, psrc = _price_fn(body)
+    out = health_engine.intelligence(_vehicle(body), interval, price, p30, [*src, *psrc])
+    out["learned_interval_days"] = None if interval is None else round(interval, 1)
+    state.log("vehicle_intelligence", body.model_dump(), {"score": out["health"]["score"]}, t0)
+    return out
+
+
+class StopIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
+    dwell_min: float = Field(default=0.0, ge=0, le=600)
+
+
+class TripIn(BaseModel):
+    start: StopIn
+    stops: list[StopIn] = Field(min_length=1, max_length=25)
+    end: StopIn | None = None
+    optimise: bool = True
+    mileage_kmpl: float = Field(default=15.0, gt=0, le=80)
+    fuel_price: float = Field(default=105.0, gt=0, le=500)
+    vehicle: VehicleIn | None = None
+
+
+@app.post("/trip/plan", dependencies=[Depends(require_key)])
+def trip_plan(body: TripIn) -> dict:
+    t0 = time.perf_counter()
+    comps = None
+    kmd = 25.0
+    if body.vehicle is not None:
+        interval, _, _ = _learned_interval(body.vehicle)
+        comps = health_engine.assess(_vehicle(body.vehicle), interval)["components"]
+        kmd = body.vehicle.km_per_day
+    pt = lambda s: trip_engine.Point(s.name, s.lat, s.lng, s.dwell_min)  # noqa: E731
+    out = trip_engine.plan(
+        pt(body.start), [pt(s) for s in body.stops], pt(body.end) if body.end else None,
+        body.mileage_kmpl, body.fuel_price, body.optimise, comps, kmd,
+    )
+    state.log("trip_plan", {"n": len(body.stops)}, {"km": out["distance_km"]}, t0)
     return out
 
 
