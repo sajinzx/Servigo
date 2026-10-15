@@ -20,3 +20,4 @@ data/generated/
 services/ml/artifacts/
 deploy-env/
 /dist/
+services/ml/model_store/prediction_log.jsonl

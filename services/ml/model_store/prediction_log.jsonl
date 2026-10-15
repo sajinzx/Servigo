@@ -1,2 +1,0 @@
-{"at": 1792092302.6258423, "model": "vehicle_intelligence", "version": "baseline", "inputs": {"kind": "car", "segment": "sedan", "age_years": 6.0, "odometer_km": 60000.0, "km_per_day": 30.0, "days_since_service": 400.0, "history_days_ago": null}, "output": {"score": 3}, "latency_ms": 3962.69}
-{"at": 1792092302.634917, "model": "trip_plan", "version": "baseline", "inputs": {"n": 1}, "output": {"km": 20.2}, "latency_ms": 0.08}
