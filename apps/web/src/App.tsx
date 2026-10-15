@@ -11,6 +11,8 @@ const Onboarding = lazy(() => import('@/pages/customer/Onboarding'));
 const Garage = lazy(() => import('@/pages/customer/Garage'));
 const Book = lazy(() => import('@/pages/customer/Book'));
 const BookingDetail = lazy(() => import('@/pages/customer/BookingDetail'));
+const VehicleHealth = lazy(() => import('@/pages/customer/VehicleHealth'));
+const TripPlanner = lazy(() => import('@/pages/customer/TripPlanner'));
 const History = lazy(() => import('@/pages/customer/History'));
 
 const Today = lazy(() => import('@/pages/mechanic/Today'));
@@ -50,6 +52,8 @@ export default function App() {
 
           <Route path="onboarding" element={wrap(customer, <Onboarding />)} />
           <Route path="garage" element={wrap(customer, <Garage />)} />
+          <Route path="vehicles/:id/health" element={wrap(customer, <VehicleHealth />)} />
+          <Route path="trips" element={wrap(customer, <TripPlanner />)} />
           <Route path="book" element={wrap(customer, <Book />)} />
           <Route path="history" element={wrap(customer, <History />)} />
           <Route path="bookings/:id" element={wrap(anyRole, <BookingDetail />)} />

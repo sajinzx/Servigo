@@ -62,9 +62,14 @@ function VehicleCard({ v }: { v: Vehicle }) {
             </>
           )}
         </p>
-        <LinkButton to={`/book?vehicle=${v.id}`} variant="secondary">
-          Book a service
-        </LinkButton>
+        <div className="flex gap-2">
+          <LinkButton to={`/vehicles/${v.id}/health`} variant="secondary">
+            Health
+          </LinkButton>
+          <LinkButton to={`/book?vehicle=${v.id}`} variant="secondary">
+            Book a service
+          </LinkButton>
+        </div>
       </div>
     </Card>
   );

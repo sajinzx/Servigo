@@ -6,6 +6,7 @@ const NAV: Record<string, { to: string; label: string }[]> = {
   customer: [
     { to: '/garage', label: 'Garage' },
     { to: '/book', label: 'Book' },
+    { to: '/trips', label: 'Trips' },
     { to: '/history', label: 'History' },
   ],
   mechanic: [
