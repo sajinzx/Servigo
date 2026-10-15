@@ -1,0 +1,16 @@
+{
+  "baseline_wape": 1.8782954216003418,
+  "baseline_wape_cell_day": 0.5756590962409973,
+  "n_test": 559104,
+  "promotion": {
+    "baseline_score": 1.8782954216003418,
+    "higher_is_better": false,
+    "metric": "wape",
+    "promoted": true,
+    "reason": "promoted",
+    "score": 1.75543781543991
+  },
+  "version": "20261012211334",
+  "wape": 1.75543781543991,
+  "wape_cell_day": 0.42676693783854264
+}

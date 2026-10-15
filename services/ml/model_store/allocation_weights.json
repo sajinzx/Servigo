@@ -1,0 +1,12 @@
+{
+  "weights": {
+    "eta": 0.5,
+    "rating": 0.2,
+    "load": 0.1,
+    "accept": 0.1,
+    "fairness": 0.1
+  },
+  "source": "grid search on simulated week",
+  "objective": 1.975643211394044,
+  "combinations": 243
+}

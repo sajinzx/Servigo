@@ -1,0 +1,30 @@
+{
+  "baseline_brier": 0.1987925362239436,
+  "baseline_roc_auc": 0.6487595873621466,
+  "brier": 0.19403334869921504,
+  "chosen": "lightgbm",
+  "coefficients": {
+    "active_jobs": -0.44539528355410746,
+    "distance_km": -0.14501516185997623,
+    "markup": -3.186040051455756,
+    "night": -0.6305205306524375
+  },
+  "mean_abs_error_vs_true_probability": 0.034905119917209244,
+  "n": 11566,
+  "promotion": {
+    "baseline_score": 0.6487595873621466,
+    "higher_is_better": true,
+    "metric": "roc_auc",
+    "promoted": true,
+    "reason": "promoted",
+    "score": 0.6751813515644662
+  },
+  "roc_auc": 0.6751813515644662,
+  "true_coefficients": {
+    "active_jobs": -0.55,
+    "distance_km": -0.16,
+    "markup": -3.0,
+    "night": -0.7
+  },
+  "version": "20261012210652"
+}

@@ -1,0 +1,7 @@
+{
+  "name": "anomaly",
+  "version": "20261012211017",
+  "metric": "precision_at_k",
+  "score": 0.18,
+  "higher_is_better": true
+}

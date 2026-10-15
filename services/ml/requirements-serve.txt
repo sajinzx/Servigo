@@ -1,0 +1,15 @@
+# Runtime dependencies only, pinned to the versions the model files were trained with
+# (joblib pickles are not guaranteed to load across scikit-learn / lightgbm versions).
+fastapi==0.143.0
+uvicorn==0.54.0
+pydantic==2.12.5
+numpy==2.3.4
+pandas==2.3.3
+scipy==1.17.1
+scikit-learn==1.9.0
+lightgbm==4.7.0
+lifelines==0.30.3
+joblib==1.5.3
+h3==4.5.0
+holidays==0.106
+httpx==0.28.1

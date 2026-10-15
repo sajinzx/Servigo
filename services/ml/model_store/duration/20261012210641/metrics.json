@@ -1,0 +1,15 @@
+{
+  "baseline_mae": 21.4864648701858,
+  "coverage_80": 0.7738402854681924,
+  "mae": 15.501157898709023,
+  "n_test": 8127,
+  "promotion": {
+    "baseline_score": 21.4864648701858,
+    "higher_is_better": false,
+    "metric": "mae",
+    "promoted": true,
+    "reason": "promoted",
+    "score": 15.501157898709023
+  },
+  "version": "20261012210641"
+}

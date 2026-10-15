@@ -1,0 +1,15 @@
+{
+  "base_rate": 0.02694721299372462,
+  "baseline_precision_at_k": 0.03,
+  "k": 100,
+  "precision_at_k": 0.18,
+  "promotion": {
+    "baseline_score": 0.03,
+    "higher_is_better": true,
+    "metric": "precision_at_k",
+    "promoted": true,
+    "reason": "promoted",
+    "score": 0.18
+  },
+  "version": "20261012211017"
+}

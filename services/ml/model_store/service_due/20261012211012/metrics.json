@@ -1,0 +1,23 @@
+{
+  "baseline_concordance": 0.6242926556567002,
+  "baseline_mae_days": 139.2791455739678,
+  "coefficients": {
+    "Intercept": 6.186508383609634,
+    "age_years": 0.005893032407841909,
+    "is_car": 0.006975570127852527,
+    "km_per_day": -0.01221609709227229
+  },
+  "concordance": 0.6522108365467945,
+  "mae_days": 119.06532442812828,
+  "n_events": 11604,
+  "n_test": 35605,
+  "promotion": {
+    "baseline_score": 0.6242926556567002,
+    "higher_is_better": true,
+    "metric": "concordance",
+    "promoted": true,
+    "reason": "promoted",
+    "score": 0.6522108365467945
+  },
+  "version": "20261012211012"
+}

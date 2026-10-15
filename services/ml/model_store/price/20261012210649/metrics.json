@@ -1,0 +1,18 @@
+{
+  "baseline_band_width": 583.7471280915468,
+  "baseline_coverage_80": 0.6638365940691522,
+  "baseline_pinball_loss": 105.2550642303433,
+  "coverage_80": 0.772609819121447,
+  "mean_band_width": 735.8697890668412,
+  "n_test": 8127,
+  "pinball_loss": 94.92512462657362,
+  "promotion": {
+    "baseline_score": 105.2550642303433,
+    "higher_is_better": false,
+    "metric": "pinball_loss",
+    "promoted": true,
+    "reason": "promoted",
+    "score": 94.92512462657362
+  },
+  "version": "20261012210649"
+}

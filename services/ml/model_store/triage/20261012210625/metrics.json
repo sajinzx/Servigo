@@ -1,0 +1,16 @@
+{
+  "baseline_macro_f1": 0.7893376496156259,
+  "baseline_top3_accuracy": 0.9796032099866251,
+  "macro_f1": 1.0,
+  "n_test": 8972,
+  "promotion": {
+    "baseline_score": 0.9796032099866251,
+    "higher_is_better": true,
+    "metric": "top3_accuracy",
+    "promoted": true,
+    "reason": "promoted",
+    "score": 1.0
+  },
+  "top3_accuracy": 1.0,
+  "version": "20261012210625"
+}

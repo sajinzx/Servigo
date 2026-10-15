@@ -1,0 +1,7 @@
+{
+  "name": "triage",
+  "version": "20261012210625",
+  "metric": "top3_accuracy",
+  "score": 1.0,
+  "higher_is_better": true
+}

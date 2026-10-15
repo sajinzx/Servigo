@@ -1,0 +1,7 @@
+{
+  "name": "acceptance",
+  "version": "20261012210652",
+  "metric": "roc_auc",
+  "score": 0.6751813515644662,
+  "higher_is_better": true
+}
