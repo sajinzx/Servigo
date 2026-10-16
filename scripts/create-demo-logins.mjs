@@ -32,11 +32,16 @@ const call = async (path, init = {}) => {
 };
 const password = () => randomBytes(12).toString('base64url') + '9a!';
 
-const wanted = [
-  { email: 'admin@servigo.app', role: 'admin', name: 'ServiGo Admin' },
-  { email: 'mechanic1@servigo.app', role: 'mechanic', name: 'Demo Mechanic One' },
-  { email: 'mechanic2@servigo.app', role: 'mechanic', name: 'Demo Mechanic Two' },
-];
+// with arguments: create one mechanic login for a named workshop
+//   node scripts/create-demo-logins.mjs <email> "<workshop name>"
+const [argEmail, argShop] = process.argv.slice(2);
+const wanted = argEmail
+  ? [{ email: argEmail, role: 'mechanic', name: argShop ?? 'Workshop owner', shop: argShop }]
+  : [
+      { email: 'admin@servigo.app', role: 'admin', name: 'ServiGo Admin' },
+      { email: 'mechanic1@servigo.app', role: 'mechanic', name: 'Demo Mechanic One' },
+      { email: 'mechanic2@servigo.app', role: 'mechanic', name: 'Demo Mechanic Two' },
+    ];
 
 const existing = (await call('/auth/v1/admin/users?per_page=200')).users ?? [];
 const free = await call('/rest/v1/workshops?select=id,name&owner_id=is.null&is_demo=eq.true&order=name&limit=2');
@@ -63,7 +68,17 @@ for (const a of wanted) {
   if (a.role === 'mechanic') {
     const mine = await call(`/rest/v1/workshops?select=id,name&owner_id=eq.${user.id}`);
     if (mine.length) shop = mine[0].name;
-    else if (free[w]) {
+    else if (a.shop) {
+      const named = await call(`/rest/v1/workshops?select=id,name,owner_id&name=eq.${encodeURIComponent(a.shop)}`);
+      if (!named.length) throw new Error(`no workshop named "${a.shop}"`);
+      if (named[0].owner_id) throw new Error(`"${a.shop}" already has an owner`);
+      await call(`/rest/v1/workshops?id=eq.${named[0].id}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ owner_id: user.id }),
+      });
+      shop = named[0].name;
+    } else if (free[w]) {
       await call(`/rest/v1/workshops?id=eq.${free[w].id}`, {
         method: 'PATCH',
         headers: { Prefer: 'return=minimal' },
