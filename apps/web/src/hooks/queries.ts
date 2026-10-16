@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { useAuth } from '@/auth/AuthProvider';
 import { requireSupabase } from '@/lib/supabase';
 import type {
   Address,
@@ -136,14 +137,21 @@ export function usePayment(bookingId: string | undefined) {
   });
 }
 
-export const useMyWorkshop = () =>
-  useQuery({
-    queryKey: ['my-workshop'],
+/** The workshop the signed-in user owns. Workshops are publicly readable, so this must filter by owner. */
+export function useMyWorkshop() {
+  const { session } = useAuth();
+  const uid = session?.user.id;
+  return useQuery({
+    queryKey: ['my-workshop', uid],
+    enabled: !!uid,
     queryFn: async () => {
-      const rows = await must<Workshop[]>(requireSupabase().from('workshops').select('*').limit(1));
+      const rows = await must<Workshop[]>(
+        requireSupabase().from('workshops').select('*').eq('owner_id', uid!).limit(1),
+      );
       return rows[0] ?? null;
     },
   });
+}
 
 /** Pending offers for the signed-in workshop, kept fresh with realtime. */
 export function usePendingOffers(workshopId: string | undefined) {
